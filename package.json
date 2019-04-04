@@ -1,0 +1,38 @@
+{
+    "name": "sun-card",
+    "version": "1.0.0",
+    "description": "Lovelace sun card",
+    "keywords": [
+        "home-assistant",
+        "homeassistant",
+        "hass",
+        "automation",
+        "lovelace",
+        "custom-cards"
+    ],
+    "module": "sun-card.js",
+    "repository": "git@github.com:mishaaq/sun-card.git",
+    "author": "Michał Żarłok <mishaaq@gmail.com>",
+    "license": "MIT",
+    "dependencies": {
+        "lit-element": "^2.0.1"
+    },
+    "devDependencies": {
+        "@typescript-eslint/parser": "^1.4.1",
+        "eslint": "^5.14.1",
+        "eslint-config-airbnb-base": "^13.1.0",
+        "eslint-plugin-import": "^2.16.0",
+        "eslint-plugin-typescript": "^0.14.0",
+        "prettier": "^1.16.4",
+        "rollup": "^1.2.3",
+        "rollup-plugin-node-resolve": "^4.0.1",
+        "rollup-plugin-typescript2": "^0.19.2",
+        "typescript": "^3.3.3333"
+    },
+    "scripts": {
+        "start": "rollup -c --watch",
+        "build": "npm run lint && npm run rollup",
+        "lint": "eslint src/index.ts",
+        "rollup": "rollup -c"
+    }
+}

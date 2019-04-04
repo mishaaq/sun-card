@@ -2,13 +2,9 @@
 Home Assistant Lovelace card to present `sun.sun` entity.
 
 [![GitHub Release][releases-shield]][releases]
-[![License][license-shield]](LICENSE.md)
+[![License MIT][license-shield]](LICENSE.md)
 
-![Project Maintenance][maintenance-shield]
-[![GitHub Activity][commits-shield]][commits]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
+<!-- [![Community Forum][forum-shield]][forum] -->
 
 ## Options
 
@@ -35,7 +31,7 @@ resources:
 
 ### Manual Installation
 
-1. Download the [sun-card](https://raw.githubusercontent.com/mishaaq/sun-card/master/sun-card.js)
+1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v1.0-alpha/sun-card.js)
 2. Place the file in your `config/www` folder
 3. Include the card code in your `ui-lovelace-card.yaml`
 
@@ -54,3 +50,11 @@ resources:
 - type: "custom:sun-card"
   name: Sun
 ```
+
+<img src="https://raw.githubusercontent.com/mishaaq/sun-card/master/images/showcase.png" width="450px"/>
+
+[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
+[forum]: https://community.home-assistant.io/c/projects/frontend
+[license-shield]: https://img.shields.io/github/license/mishaaq/sun-card.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/mishaaq/sun-card.svg?style=for-the-badge
+[releases]: https://github.com/mishaaq/sun-card/releases

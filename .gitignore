@@ -1,0 +1,8 @@
+/node_modules/
+/.rpt2_cache/
+/.idea/
+/.vscode/
+yarn.lock
+package-lock.json
+/src/chart.svg
+.DS_Store

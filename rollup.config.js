@@ -7,21 +7,11 @@ const commonPlugins = [
     typescript()
 ];
 
-export default [
-    {
-        input: 'src/index.ts',
-        output: {
-            file: 'sun-card.js',
-            format: 'es'
-        },
-        plugins: [...commonPlugins]
+export default {
+    input: 'src/card.ts',
+    output: {
+        file: 'sun-card.js',
+        format: 'es'
     },
-    {
-        input: 'src/editor.ts',
-        output: {
-            file: 'sun-card-editor.js',
-            format: 'es'
-        },
-        plugins: [...commonPlugins]
-    }
-]
+    plugins: [...commonPlugins]
+}

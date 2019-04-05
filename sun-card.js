@@ -2302,6 +2302,8 @@ LitElement.finalized = true;
  */
 LitElement.render = render$1;
 
+class ConfigEvent extends Event {
+}
 class TimeEntity {
     get attributes() {
         return this._entity.attributes;
@@ -2365,18 +2367,89 @@ class SunTrackerFactory {
     }
 }
 
+const fireEvent = (node, type, detail, options) => {
+    options = options || {};
+    detail = detail === null || detail === undefined ? {} : detail;
+    const event = new ConfigEvent(type, {
+        bubbles: options.bubbles === undefined ? true : options.bubbles,
+        cancelable: Boolean(options.cancelable),
+        composed: options.composed === undefined ? true : options.composed,
+    });
+    event.detail = detail;
+    node.dispatchEvent(event);
+    return event;
+};
+let SunCardEditor = class SunCardEditor extends LitElement {
+    setConfig(config) {
+        this._config = config;
+        this.requestUpdate();
+    }
+    get _name() {
+        return this._config.name || '';
+    }
+    render() {
+        if (!this.hass) {
+            return html ``;
+        }
+        return html `
+      <div class="card-config">
+        <paper-input
+          label="Name"
+          .value="${this._name}"
+          .configValue="${'name'}"
+          @value-changed="${this._valueChanged}">
+        </paper-input>
+      </div>
+    `;
+    }
+    _valueChanged(ev) {
+        if (!this._config || !this.hass) {
+            return;
+        }
+        const { target } = ev;
+        if (this[`_${target.configValue}`] === target.value) {
+            return;
+        }
+        if (target.configValue) {
+            if (target.value === '') {
+                delete this._config[target.configValue];
+            }
+            else {
+                this._config = Object.assign({}, this._config, { [target.configValue]: target.checked !== undefined ? target.checked : target.value });
+            }
+        }
+        fireEvent(this, 'config-changed', { config: this._config });
+    }
+};
+__decorate([
+    property()
+], SunCardEditor.prototype, "hass", void 0);
+__decorate([
+    property()
+], SunCardEditor.prototype, "_config", void 0);
+SunCardEditor = __decorate([
+    customElement('sun-card-editor')
+], SunCardEditor);
+
 let SunCard = class SunCard extends LitElement {
     constructor() {
         super(...arguments);
+        this.svgViewBoxW = 24 * 60; // 24h * 60 minutes - viewBox width in local points
         this.svgViewBoxH = 432; // viewBox height in local points
         // half of svg viewBox height / (-zenith + zenith elevation angle)
         this.yScale = this.svgViewBoxH / 180;
+    }
+    static async getConfigElement() {
+        return document.createElement('sun-card-editor');
+    }
+    static getStubConfig() {
+        return {};
     }
     setConfig(config) {
         if (!config || !config.type) {
             throw new Error('Invalid configuration');
         }
-        this._config = config;
+        this._config = Object.assign({ name: 'Sun' }, config);
     }
     getCardSize() {
         return 4;
@@ -2402,8 +2475,8 @@ let SunCard = class SunCard extends LitElement {
         const sunXPos = this.xCoord(currentTimeEntity.time);
         const sunYPos = -this.yCoord(st.elevation());
         return html `
-      <ha-card .header=${this._config.name ? this._config.name : 'Sun'}>
-        <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} 1440 ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
+      <ha-card .header=${this._config.name}>
+        <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <circle fill="yellow" cx="${sunXPos}" cy="${sunYPos}" r="30" />
         </svg>
       </ha-card>
@@ -2424,7 +2497,10 @@ let SunCard = class SunCard extends LitElement {
         padding: 8px;
       }
       svg {
-        background: linear-gradient(rgba(242, 249, 254, 0), rgb(214, 240, 253) 46%, rgb(182, 224, 38) 54%, rgba(171, 220, 40, 0));
+        background: linear-gradient(rgba(242, 249, 254,  0%),
+                                     rgb(214, 240, 253) 46%,
+                                     rgb(182, 224,  38) 54%,
+                                    rgba(171, 220,  40,  0%));
       }
     `;
     }

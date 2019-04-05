@@ -8,33 +8,41 @@ import {
   css,
 } from 'lit-element';
 
-import { TimeEntity } from './entities';
+import { SunCardConfig, TimeEntity } from './types';
 import { SunTracker, SunTrackerFactory } from './tracker';
-
-
-interface SunConfig {
-  type: string;
-  name?: string;
-}
+import './editor'
 
 
 @customElement('sun-card')
 class SunCard extends LitElement {
+  public static async getConfigElement(): Promise<HTMLElement> {
+    return document.createElement('sun-card-editor');
+  }
+
+  public static getStubConfig(): object {
+    return {};
+  }
+
   @property() public hass?: any;
 
-  @property() private _config?: SunConfig;
+  @property() private _config?: SunCardConfig;
+
+  readonly svgViewBoxW: number = 24 * 60; // 24h * 60 minutes - viewBox width in local points
 
   readonly svgViewBoxH: number = 432; // viewBox height in local points
 
   // half of svg viewBox height / (-zenith + zenith elevation angle)
   readonly yScale: number = this.svgViewBoxH / 180;
 
-  public setConfig(config: SunConfig): void {
+  public setConfig(config: SunCardConfig): void {
     if (!config || !config.type) {
       throw new Error('Invalid configuration');
     }
 
-    this._config = config;
+    this._config = {
+      name: 'Sun',
+      ...config,
+    };
   }
 
   public getCardSize(): number {
@@ -69,8 +77,8 @@ class SunCard extends LitElement {
     const sunYPos = -this.yCoord(st.elevation());
 
     return html`
-      <ha-card .header=${this._config.name ? this._config.name : 'Sun'}>
-        <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} 1440 ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
+      <ha-card .header=${this._config.name}>
+        <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <circle fill="yellow" cx="${sunXPos}" cy="${sunYPos}" r="30" />
         </svg>
       </ha-card>
@@ -85,7 +93,6 @@ class SunCard extends LitElement {
     return angle * this.yScale;
   }
 
-
   static get styles(): CSSResult {
     return css`
       .warning {
@@ -95,7 +102,10 @@ class SunCard extends LitElement {
         padding: 8px;
       }
       svg {
-        background: linear-gradient(rgba(242, 249, 254, 0), rgb(214, 240, 253) 46%, rgb(182, 224, 38) 54%, rgba(171, 220, 40, 0));
+        background: linear-gradient(rgba(242, 249, 254,  0%),
+                                     rgb(214, 240, 253) 46%,
+                                     rgb(182, 224,  38) 54%,
+                                    rgba(171, 220,  40,  0%));
       }
     `;
   }

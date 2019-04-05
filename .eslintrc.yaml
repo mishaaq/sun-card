@@ -1,6 +1,7 @@
 extends: airbnb-base
 parser: "@typescript-eslint/parser"
 rules:
+  no-param-reassign: 0
   no-else-return: 0
   no-underscore-dangle: 0
   nonblock-statement-body-position: 0
@@ -13,7 +14,10 @@ rules:
   camelcase: 0
   no-unused-vars: 0
   import/no-unresolved: 0
+  import/prefer-default-export: 0
+  max-len: ["error", {"code": 120, "ignoreUrls": true}]
 globals:
+  document: true
   window: true
   Event: true
   customElements: true

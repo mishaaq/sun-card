@@ -1,4 +1,13 @@
 
+export interface SunCardConfig {
+  type: string;
+  name?: string;
+}
+
+export class ConfigEvent extends Event {
+  detail?: object;
+}
+
 export class TimeEntity {
   private _entity: any;
 

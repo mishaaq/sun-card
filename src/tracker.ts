@@ -16,31 +16,37 @@ class BasicTracker implements SunTracker {
   protected _timeDiff: number;
 
   protected _sunrise: Date = new Date(0);
+
   sunrise(): Date {
     return this._sunrise;
   }
 
   protected _sunset: Date = new Date(0);
+
   sunset(): Date {
     return this._sunset;
   }
 
   protected _elevation: number = 0;
+
   elevation(): number {
     return this._elevation;
   }
 
   protected _maxElevation: number = 90; // max elevation of sun in any place on any time is 90 degrees
+
   maxElevation(): number {
     return this._maxElevation;
   }
 
   protected _timeToSunset: Date = new Date(0);
+
   timeToSunset(): Date {
     return this._timeToSunset;
   }
 
   protected _daylight: Date = new Date(0);
+
   daylight(): Date {
     return this._daylight;
   }
@@ -67,7 +73,7 @@ export class SunTrackerFactory {
 
   public static get(currentTime : Date, timeInUTC: Date) : SunTracker {
     if (!this._instance) {
-      this._instance = new BasicTracker(timeInUTC.getTime() - currentTime.getTime())
+      this._instance = new BasicTracker(timeInUTC.getTime() - currentTime.getTime());
     }
     return this._instance;
   }

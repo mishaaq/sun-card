@@ -5,13 +5,19 @@ import {
   property,
   CSSResult,
   TemplateResult,
-  css,
+  css, PropertyValues,
 } from 'lit-element';
 
-import { SunCardConfig, TimeEntity } from './types';
-import { SunTracker, SunTrackerFactory } from './tracker';
-import './editor'
+import { Helpers } from './helpers';
+import {
+  SunCardConfig,
+  TimeEntity,
+  Duration,
+  SunEntity,
+  createSunEntity,
+} from './types';
 
+import './editor';
 
 @customElement('sun-card')
 class SunCard extends LitElement {
@@ -39,10 +45,7 @@ class SunCard extends LitElement {
       throw new Error('Invalid configuration');
     }
 
-    this._config = {
-      name: 'Sun',
-      ...config,
-    };
+    this._config = config;
   }
 
   public getCardSize(): number {
@@ -54,9 +57,9 @@ class SunCard extends LitElement {
       return html``;
     }
 
-    const sunStateObj = this.hass.states['sun.sun'];
-    const timeStateObj = this.hass.states['sensor.time'];
-    const timeUTCStateObj = this.hass.states['sensor.time_utc'];
+    const sunStateObj: object = this.hass.states['sun.sun'];
+    const timeStateObj: object = this.hass.states['sensor.time'];
+    const timeUTCStateObj: object = this.hass.states['sensor.time_utc'];
 
     if (!sunStateObj || !timeStateObj || !timeUTCStateObj) {
       return html`
@@ -65,19 +68,17 @@ class SunCard extends LitElement {
         </ha-card>
       `;
     }
-
     const currentTimeEntity: TimeEntity = new TimeEntity(timeStateObj);
-    const utcTimeEntity: TimeEntity = new TimeEntity(timeUTCStateObj);
 
-    const st: SunTracker = SunTrackerFactory.get(currentTimeEntity.time, utcTimeEntity.time);
+    Helpers.updateTZ(currentTimeEntity, new TimeEntity(timeUTCStateObj));
 
-    st.update(sunStateObj);
+    const sunEntity: SunEntity = createSunEntity(sunStateObj, currentTimeEntity);
 
     const sunXPos = this.xCoord(currentTimeEntity.time);
-    const sunYPos = -this.yCoord(st.elevation());
+    const sunYPos = -this.yCoord(sunEntity.elevation);
 
     return html`
-      <ha-card .header=${this._config.name}>
+      <ha-card .header=${this._config.name || sunEntity.friendly_name}>
         <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <circle fill="yellow" cx="${sunXPos}" cy="${sunYPos}" r="30" />
         </svg>

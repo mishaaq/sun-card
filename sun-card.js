@@ -2302,71 +2302,119 @@ LitElement.finalized = true;
  */
 LitElement.render = render$1;
 
-class ConfigEvent extends Event {
-}
-class TimeEntity {
-    get attributes() {
-        return this._entity.attributes;
+let _timeZoneDiffInMillis = 0;
+var Helpers;
+(function (Helpers) {
+    function updateTZ(currentTime, timeInUTC) {
+        _timeZoneDiffInMillis = timeInUTC.time.getTime() - currentTime.time.getTime();
     }
+    Helpers.updateTZ = updateTZ;
+})(Helpers || (Helpers = {}));
+Date.prototype.toLocal = function toLocal() {
+    return new Date(this.getTime() + _timeZoneDiffInMillis);
+};
+
+// Simple class to represent duration in hours, minutes and seconds
+class Duration {
+    constructor(hours, minutes, seconds) {
+        this.hours = hours;
+        this.minutes = minutes;
+        this.seconds = seconds;
+    }
+}
+// Wrapper for HA time entity (from 'time_date' platform)
+class TimeEntity {
+    // get Date object from HA time entity
     get time() {
         const stateDate = new Date();
         stateDate.setHours(this._entity.state.split(':')[0]);
         stateDate.setMinutes(this._entity.state.split(':')[1]);
         return stateDate;
     }
+    get hour() {
+        return this._entity.state.split(':')[0];
+    }
+    get minute() {
+        return this._entity.state.split(':')[1];
+    }
+    get duration() {
+        return new Duration(this.hour, this.minute);
+    }
     constructor(haEntity) {
         this._entity = haEntity;
     }
 }
-
-class BasicTracker {
-    constructor(timeDiff) {
-        this._sunrise = new Date(0);
-        this._sunset = new Date(0);
-        this._elevation = 0;
-        this._maxElevation = 90; // max elevation of sun in any place on any time is 90 degrees
-        this._timeToSunset = new Date(0);
-        this._daylight = new Date(0);
-        this._timeDiff = timeDiff;
+class HASunEntity {
+    constructor(haEntity, currentTime) {
+        this._entity = haEntity;
+        this._currentTime = currentTime;
     }
-    sunrise() {
-        return this._sunrise;
+    get friendly_name() {
+        return this._entity.friendly_name;
     }
-    sunset() {
-        return this._sunset;
+    get elevation() {
+        return this._entity.attributes.elevation;
     }
-    elevation() {
-        return this._elevation;
+    get max_elevation() {
+        return 90;
     }
-    maxElevation() {
-        return this._maxElevation;
+    get daylight() {
+        return new Duration(0, 0, 0);
     }
-    timeToSunset() {
-        return this._timeToSunset;
+    get sunrise() {
+        return new Date(0);
     }
-    daylight() {
-        return this._daylight;
+    get sunset() {
+        return new Date(0);
     }
-    update(sunEntity, currentTime) {
-        this._elevation = sunEntity.attributes.elevation;
-        if (currentTime) {
-            const nextSunsetUTC = new Date(sunEntity.attributes.next_setting);
-            this._timeToSunset = new Date(this.convertToLocalTime(nextSunsetUTC).getTime() - currentTime.getTime());
-        }
-    }
-    convertToLocalTime(timeUTC) {
-        return new Date(timeUTC.getTime() + this._timeDiff);
+    get to_sunset() {
+        return new Duration(0, 0, 0);
     }
 }
-class SunTrackerFactory {
-    static get(currentTime, timeInUTC) {
-        if (!this._instance) {
-            this._instance = new BasicTracker(timeInUTC.getTime() - currentTime.getTime());
-        }
-        return this._instance;
+HASunEntity.requiredAttributes = ['elevation'];
+class EnhancedSunEntity extends HASunEntity {
+    get max_elevation() {
+        return this._entity.attributes.max_elevation;
+    }
+    get daylight() {
+        let daylightInSeconds = this._entity.attributes.daylight;
+        const hours = Math.floor(daylightInSeconds / 3600);
+        daylightInSeconds %= 3600;
+        const minutes = Math.floor(daylightInSeconds / 60);
+        const seconds = daylightInSeconds % 60;
+        return new Duration(hours, minutes, seconds);
+    }
+    get sunrise() {
+        return new Date(this._entity.attributes.sunrise).toLocal();
+    }
+    get sunset() {
+        return new Date(this._entity.attributes.sunset).toLocal();
+    }
+    get to_sunset() {
+        const diff = new Date(this.sunset.getTime() - this._currentTime.time.getTime());
+        return new Duration(diff.getHours(), diff.getMinutes());
     }
 }
+EnhancedSunEntity.requiredAttributes = ['elevation', 'max_elevation', 'sunrise', 'sunset', 'daylight'];
+function createSunEntityCtor(ctor, sunEntity, ...props) {
+    return new ctor(sunEntity, props);
+}
+function createSunEntity(sunEntity, currentTime) {
+    const chain = [EnhancedSunEntity, HASunEntity];
+    const ctor = chain.find((cls) => {
+        return cls.requiredAttributes.every((attribute) => {
+            return Object.hasOwnProperty.call(sunEntity.attributes, attribute);
+        });
+    });
+    if (!ctor) {
+        throw new Error(`Couldn't find corresponding class to entity with attributes:
+      ${Object.keys(sunEntity.attributes).toString()}`);
+    }
+    return createSunEntityCtor(ctor, sunEntity, currentTime);
+}
 
+class ConfigEvent extends Event {
+}
 const fireEvent = (node, type, detail, options) => {
     options = options || {};
     detail = detail === null || detail === undefined ? {} : detail;
@@ -2449,7 +2497,7 @@ let SunCard = class SunCard extends LitElement {
         if (!config || !config.type) {
             throw new Error('Invalid configuration');
         }
-        this._config = Object.assign({ name: 'Sun' }, config);
+        this._config = config;
     }
     getCardSize() {
         return 4;
@@ -2469,13 +2517,12 @@ let SunCard = class SunCard extends LitElement {
       `;
         }
         const currentTimeEntity = new TimeEntity(timeStateObj);
-        const utcTimeEntity = new TimeEntity(timeUTCStateObj);
-        const st = SunTrackerFactory.get(currentTimeEntity.time, utcTimeEntity.time);
-        st.update(sunStateObj);
+        Helpers.updateTZ(currentTimeEntity, new TimeEntity(timeUTCStateObj));
+        const sunEntity = createSunEntity(sunStateObj, currentTimeEntity);
         const sunXPos = this.xCoord(currentTimeEntity.time);
-        const sunYPos = -this.yCoord(st.elevation());
+        const sunYPos = -this.yCoord(sunEntity.elevation);
         return html `
-      <ha-card .header=${this._config.name}>
+      <ha-card .header=${this._config.name || sunEntity.friendly_name}>
         <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
           <circle fill="yellow" cx="${sunXPos}" cy="${sunYPos}" r="30" />
         </svg>

@@ -14,7 +14,6 @@ rules:
   camelcase: 0
   no-unused-vars: 0
   import/no-unresolved: 0
-  no-extend-native: 0
   no-inner-declarations: 0
   arrow-body-style: 0
   import/prefer-default-export: 0

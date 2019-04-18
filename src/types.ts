@@ -1,46 +1,30 @@
+import moment from 'moment';
 
 export interface SunCardConfig {
   type: string;
   name?: string;
 }
 
-// Simple class to represent duration in hours, minutes and seconds
-export class Duration {
-  hours: number;
-
-  minutes: number;
-
-  seconds?: number;
-
-  constructor(hours: number, minutes: number, seconds?: number) {
-    this.hours = hours;
-    this.minutes = minutes;
-    this.seconds = seconds;
-  }
+export type Coords = {
+  x: number;
+  y: number;
 }
 
-// Wrapper for HA time entity (from 'time_date' platform)
+// Wrapper for HA time_utc entity (from 'time_date' platform)
 export class TimeEntity {
   private _entity: any;
 
-  // get Date object from HA time entity
-  get time(): Date {
-    const stateDate = new Date();
-    stateDate.setHours(this._entity.state.split(':')[0]);
-    stateDate.setMinutes(this._entity.state.split(':')[1]);
-    return stateDate;
+  // get local time from HA time_utc entity
+  get time(): moment.Moment {
+    return moment.utc(this._entity.state, 'h:mm A').local();
   }
 
   get hour(): number {
-    return this._entity.state.split(':')[0];
+    return this.time.hour();
   }
 
   get minute(): number {
-    return this._entity.state.split(':')[1];
-  }
-
-  get duration(): Duration {
-    return new Duration(this.hour, this.minute);
+    return this.time.minute();
   }
 
   constructor(haEntity: any) {
@@ -59,24 +43,28 @@ export interface SunEntity {
   max_elevation: number;
 
   // get time of sunrise in local time zone
-  sunrise: Date;
+  sunrise: moment.Moment;
 
   // get time of sunset in local time zone
-  sunset: Date;
+  sunset: moment.Moment;
 
   // get duration of daylight (from sunrise to sunset)
-  daylight: Duration;
+  daylight: moment.Duration;
 
   // get time to sunset
-  to_sunset: Duration;
+  to_sunset: moment.Duration;
+}
+
+interface SunEntityConstructor {
+  new(sunEntity: any, currentTimeEntity: TimeEntity): SunEntity;
 }
 
 class HASunEntity implements SunEntity {
-  static requiredAttributes: string[] = ['elevation'];
+  static requiredAttributes: string[] = ['elevation', 'next_rising', 'next_setting'];
 
   protected _entity: any;
 
-  protected _currentTime: TimeEntity;
+  protected _timeEntity: TimeEntity;
 
   get friendly_name(): string {
     return this._entity.friendly_name;
@@ -90,25 +78,34 @@ class HASunEntity implements SunEntity {
     return 90;
   }
 
-  get daylight(): Duration {
-    return new Duration(0, 0, 0);
+  get sunrise(): moment.Moment {
+    let nextSunrise = moment.utc(this._entity.attributes.next_rising).local();
+    if (this._timeEntity.time.day() !== nextSunrise.day()) {
+      nextSunrise = moment.invalid();
+    }
+    return nextSunrise;
   }
 
-  get sunrise(): Date {
-    return new Date(0);
+  get sunset(): moment.Moment {
+    let nextSunset = moment.utc(this._entity.attributes.next_setting).local();
+    if (this._timeEntity.time.day() !== nextSunset.day()) {
+      nextSunset = moment.invalid();
+    }
+    return nextSunset;
   }
 
-  get sunset(): Date {
-    return new Date(0);
+  get daylight(): moment.Duration {
+    return moment.duration(NaN);
   }
 
-  get to_sunset(): Duration {
-    return new Duration(0, 0, 0);
+  get to_sunset(): moment.Duration {
+    // returns invalid Duration in case of invalid sunset time
+    return moment.duration(this.sunset.diff(this._timeEntity.time));
   }
 
-  constructor(haEntity: any, currentTime: TimeEntity) {
+  constructor(haEntity: any, currentTimeEntity: TimeEntity) {
     this._entity = haEntity;
-    this._currentTime = currentTime;
+    this._timeEntity = currentTimeEntity;
   }
 }
 
@@ -119,35 +116,25 @@ class EnhancedSunEntity extends HASunEntity implements SunEntity {
     return this._entity.attributes.max_elevation;
   }
 
-  get daylight(): Duration {
-    let daylightInSeconds = this._entity.attributes.daylight;
-    const hours = Math.floor(daylightInSeconds / 3600);
-    daylightInSeconds %= 3600;
-    const minutes = Math.floor(daylightInSeconds / 60);
-    const seconds = daylightInSeconds % 60;
-    return new Duration(hours, minutes, seconds);
+  get daylight(): moment.Duration {
+    return moment.duration(this._entity.attributes.daylight, 'seconds');
   }
 
-  get sunrise(): Date {
-    return new Date(this._entity.attributes.sunrise).toLocal();
+  get sunrise(): moment.Moment {
+    return moment.utc(this._entity.attributes.sunrise).local();
   }
 
-  get sunset(): Date {
-    return new Date(this._entity.attributes.sunset).toLocal();
+  get sunset(): moment.Moment {
+    return moment.utc(this._entity.attributes.sunset).local();
   }
 
-  get to_sunset(): Duration {
-    const diff: Date = new Date(this.sunset.getTime() - this._currentTime.time.getTime());
-    return new Duration(diff.getHours(), diff.getMinutes());
+  get to_sunset(): moment.Duration {
+    return moment.duration(this.sunset.diff(this._timeEntity.time));
   }
 }
 
-interface SunEntityConstructor {
-  new(sunEntity: any, ...props): SunEntity;
-}
-
-function createSunEntityCtor(ctor: SunEntityConstructor, sunEntity: any, ...props): SunEntity {
-  return new ctor(sunEntity, props);
+function createSunEntityCtor(ctor: SunEntityConstructor, sunEntity: any, currentTimeEntity: TimeEntity): SunEntity {
+  return new ctor(sunEntity, currentTimeEntity);
 }
 
 export function createSunEntity(sunEntity: any, currentTime: TimeEntity) : SunEntity {

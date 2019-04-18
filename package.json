@@ -1,6 +1,6 @@
 {
     "name": "sun-card",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Lovelace sun card",
     "keywords": [
         "home-assistant",
@@ -15,7 +15,11 @@
     "author": "Michał Żarłok <mishaaq@gmail.com>",
     "license": "MIT",
     "dependencies": {
-        "lit-element": "^2.0.1"
+        "@types/moment": "^2.13.0",
+        "@types/moment-timezone": "^0.5.12",
+        "lit-element": "^2.0.1",
+        "moment": "^2.24.0",
+        "moment-timezone": "^0.5.23"
     },
     "devDependencies": {
         "@typescript-eslint/parser": "^1.4.1",
@@ -25,8 +29,10 @@
         "eslint-plugin-typescript": "^0.14.0",
         "prettier": "^1.16.4",
         "rollup": "^1.2.3",
+        "rollup-plugin-commonjs": "^9.3.4",
         "rollup-plugin-node-resolve": "^4.0.1",
         "rollup-plugin-typescript2": "^0.19.2",
+        "rollup-plugin-json": "^4.0.0",
         "typescript": "^3.3.3333"
     },
     "scripts": {

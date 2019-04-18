@@ -1,9 +1,27 @@
+import commonjs from 'rollup-plugin-commonjs';
 import resolve from 'rollup-plugin-node-resolve';
-import typescript  from 'rollup-plugin-typescript2';
+import typescript from 'rollup-plugin-typescript2';
+import json from 'rollup-plugin-json';
 
 
 const commonPlugins = [
-    resolve(),
+    json({
+        include: [
+            'node_modules/moment-timezone/**'
+        ],
+        compact: true,
+        preferConst: true
+    }),
+    commonjs({
+        include: [
+            'node_modules/moment/**',
+            'node_modules/moment-timezone/**'
+        ],
+        sourceMap: false
+    }),
+    resolve({
+        mainFields: ['main']
+    }),
     typescript()
 ];
 

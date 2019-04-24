@@ -29,7 +29,8 @@ export default {
     input: 'src/card.ts',
     output: {
         file: 'sun-card.js',
-        format: 'es'
+        format: 'esm',
+        compact: true
     },
     plugins: [...commonPlugins]
 }

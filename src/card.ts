@@ -163,13 +163,18 @@ class SunCard extends LitElement {
 
     return html`
       <ha-card .header=${this._config.name || sunEntity.friendly_name || this.hass.localize('domain.sun')}>
-        <svg width="100%" x="0px" y="0px" height="150px" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH}" xmlns="http://www.w3.org/2000/svg" version="1.1">
-          ${renderSunrise()}
-          ${renderSunset()}
-          ${renderTimeToSunset()}
-          ${renderDaylight()}
-          ${renderSun()}
-        </svg>
+        <div class="wrapper">
+          <svg class="top" width="100%" height="75px" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
+            ${renderSunrise()}
+            ${renderSunset()}
+            ${renderSun()}
+          </svg>
+          <svg class="bottom" width="100%" height="75px" preserveAspectRatio="xMinYMax slice" viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
+            ${renderTimeToSunset()}
+            ${renderDaylight()}
+            ${renderSun()}
+          </svg>
+        </div>
       </ha-card>
     `;
   }
@@ -189,11 +194,24 @@ class SunCard extends LitElement {
         background-color: #fce588;
         padding: 8px;
       }
-      svg {
+      .wrapper {
         background: linear-gradient(rgba(242, 249, 254,  0%),
                                      rgb(214, 240, 253) 46%,
                                      rgb(182, 224,  38) 54%,
                                     rgba(171, 220,  40,  0%));
+        flex-direction: column;
+        flex-wrap: nowrap;
+        height: 150px;
+        position: relative;
+      }
+      svg.top {
+        top: 0;
+      }
+      svg.bottom {
+        bottom: 0;
+      }
+      svg {
+        position: absolute;
         font-size: 38px;
         stroke-width: 4;
         fill: var(--primary-text-color)
@@ -214,6 +232,12 @@ class SunCard extends LitElement {
       }
       svg .sun {
         fill: yellow;
+      }
+      svg.bottom .sun {
+        fill-opacity: 0.1;
+        stroke-width: 4;
+        stroke: var(--light-primary-color);
+        stroke-dasharray: 5,5
       }
     `;
   }

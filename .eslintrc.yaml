@@ -14,7 +14,11 @@ rules:
   camelcase: 0
   no-unused-vars: 0
   import/no-unresolved: 0
+  no-inner-declarations: 0
+  arrow-body-style: 0
+  operator-linebreak: 0
   import/prefer-default-export: 0
+  new-cap: ["error", { "newIsCap": false }]
   max-len: ["error", {"code": 120, "ignoreUrls": true}]
 globals:
   document: true

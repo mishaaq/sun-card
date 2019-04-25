@@ -6,7 +6,11 @@ import {
   TemplateResult,
 } from 'lit-element';
 
-import { SunCardConfig, ConfigEvent } from './types';
+import { SunCardConfig } from './types';
+
+class ConfigEvent extends Event {
+  detail?: object;
+}
 
 const fireEvent = (node: HTMLElement, type, detail, options?) => {
   options = options || {};
@@ -22,7 +26,7 @@ const fireEvent = (node: HTMLElement, type, detail, options?) => {
 };
 
 @customElement('sun-card-editor')
-export default class SunCardEditor extends LitElement {
+export class SunCardEditor extends LitElement {
   @property() public hass?: any;
 
   @property() private _config?: SunCardConfig;

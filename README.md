@@ -1,5 +1,5 @@
 # Sun Card
-Home Assistant Lovelace card to present `sun.sun` entity. Requires `time_date.time` and `time_date.time_utc` sensors as well to work properly.
+Home Assistant Lovelace card to present `sun.sun` entity. Requires `time_date.time_utc` sensors as well to work properly.
 
 [![GitHub Release][releases-shield]][releases]
 [![License MIT][license-shield]](LICENSE.md)

@@ -5,25 +5,9 @@ import {
   property,
   TemplateResult,
 } from 'lit-element';
+import { fireEvent } from "./hass";
 
 import { SunCardConfig } from './types';
-
-class ConfigEvent extends Event {
-  detail?: object;
-}
-
-const fireEvent = (node: HTMLElement, type, detail, options?) => {
-  options = options || {};
-  detail = detail === null || detail === undefined ? {} : detail;
-  const event = new ConfigEvent(type, {
-    bubbles: options.bubbles === undefined ? true : options.bubbles,
-    cancelable: Boolean(options.cancelable),
-    composed: options.composed === undefined ? true : options.composed,
-  });
-  event.detail = detail;
-  node.dispatchEvent(event);
-  return event;
-};
 
 @customElement('sun-card-editor')
 export class SunCardEditor extends LitElement {

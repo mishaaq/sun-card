@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { HassEntity } from "home-assistant-js-websocket";
 
 export interface SunCardConfig {
   type: string;
@@ -12,7 +13,7 @@ export type Coords = {
 
 // Wrapper for HA time_utc entity (from 'time_date' platform)
 export class TimeEntity {
-  private _entity: any;
+  private _entity: HassEntity;
 
   // get local time from HA time_utc entity
   get time(): moment.Moment {
@@ -27,14 +28,14 @@ export class TimeEntity {
     return this.time.minute();
   }
 
-  constructor(haEntity: any) {
+  constructor(haEntity: HassEntity) {
     this._entity = haEntity;
   }
 }
 
 export interface SunEntity {
   // get friendly name as defined on hass configuration
-  friendly_name: string;
+  friendly_name?: string;
 
   // get current sun's elevation
   elevation: number;
@@ -62,12 +63,12 @@ interface SunEntityConstructor {
 class HASunEntity implements SunEntity {
   static requiredAttributes: string[] = ['elevation', 'next_rising', 'next_setting'];
 
-  protected _entity: any;
+  protected _entity: HassEntity;
 
   protected _timeEntity: TimeEntity;
 
-  get friendly_name(): string {
-    return this._entity.friendly_name;
+  get friendly_name(): string | undefined {
+    return this._entity.attributes.friendly_name;
   }
 
   get elevation(): number {
@@ -103,7 +104,7 @@ class HASunEntity implements SunEntity {
     return moment.duration(this.sunset.diff(this._timeEntity.time));
   }
 
-  constructor(haEntity: any, currentTimeEntity: TimeEntity) {
+  constructor(haEntity: HassEntity, currentTimeEntity: TimeEntity) {
     this._entity = haEntity;
     this._timeEntity = currentTimeEntity;
   }
@@ -133,11 +134,11 @@ class EnhancedSunEntity extends HASunEntity implements SunEntity {
   }
 }
 
-function createSunEntityCtor(ctor: SunEntityConstructor, sunEntity: any, currentTimeEntity: TimeEntity): SunEntity {
+function createSunEntityCtor(ctor: SunEntityConstructor, sunEntity: HassEntity, currentTimeEntity: TimeEntity): SunEntity {
   return new ctor(sunEntity, currentTimeEntity);
 }
 
-export function createSunEntity(sunEntity: any, currentTime: TimeEntity) : SunEntity {
+export function createSunEntity(sunEntity: HassEntity, currentTime: TimeEntity) : SunEntity {
   const chain = [EnhancedSunEntity, HASunEntity];
   const ctor = chain.find((cls): boolean => {
     return cls.requiredAttributes.every((attribute): boolean => {

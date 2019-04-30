@@ -10,6 +10,9 @@ import {
   css,
 } from 'lit-element';
 
+import { HassEntity } from "home-assistant-js-websocket";
+import { HomeAssistant } from "./hass";
+
 import moment from 'moment';
 import 'moment-timezone';
 
@@ -57,7 +60,7 @@ class SunCard extends LitElement {
     return {};
   }
 
-  @property() public hass?: any;
+  @property() public hass?: HomeAssistant;
 
   @property() private _config?: SunCardConfig;
 
@@ -88,8 +91,8 @@ class SunCard extends LitElement {
     moment.tz.setDefault(this.hass.config.time_zone);
     const { localize } = this.hass;
 
-    const sunStateObj: object = this.hass.states['sun.sun'];
-    const timeStateObj: object = this.hass.states['sensor.time_utc'];
+    const sunStateObj: HassEntity = this.hass.states['sun.sun'];
+    const timeStateObj: HassEntity = this.hass.states['sensor.time_utc'];
 
     if (!sunStateObj || !timeStateObj) {
       return html`
@@ -172,7 +175,7 @@ class SunCard extends LitElement {
     };
 
     return html`
-      <ha-card .header=${this._config.name || sunEntity.friendly_name || this.hass.localize('domain.sun')}>
+      <ha-card .header=${this._config.name || sunEntity.friendly_name || localize('domain.sun')}>
         <div class="content">
           <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
             ${renderSunrise()}

@@ -18,7 +18,8 @@
         "@types/moment-timezone": "^0.5.12",
         "lit-element": "^2.0.1",
         "moment": "^2.24.0",
-        "moment-timezone": "^0.5.23"
+        "moment-timezone": "^0.5.23",
+        "home-assistant-js-websocket": "^4.0.0"
     },
     "devDependencies": {
         "@typescript-eslint/parser": "^1.4.1",

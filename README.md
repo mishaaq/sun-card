@@ -31,14 +31,14 @@ resources:
 
 ### Manual Installation
 
-1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v1.0-alpha/sun-card.js)
+1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v2.0/sun-card.min.js)
 2. Place the file in your `config/www` folder
 3. Include the card code in your `ui-lovelace-card.yaml`
 
 ```yaml
 title: Home
 resources:
-  - url: /local/sun-card.js
+  - url: /local/sun-card.min.js
     type: module
 ```
 

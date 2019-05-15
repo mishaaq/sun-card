@@ -1,15 +1,26 @@
 # Sun Card
+
 Home Assistant Lovelace card to present `sun.sun` entity. Requires `time_date.time_utc` sensors as well to work properly.
+It provides visual information about current sun elevation throughout the day, time of sunrise/sunset. Available data depends on used Sun component: pre-existing one from Home Assistant (Basic) or extended available [here](https://github.com/pnbruckner/homeassistant-config/blob/master/docs/sun.md) (Extended).
 
 [![GitHub Release][releases-shield]][releases]
 [![License MIT][license-shield]](LICENSE.md)
+[![Community Forum][forum-shield]](https://community.home-assistant.io/t/lovelace-sun-card/109489)
 
-<!-- [![Community Forum][forum-shield]][forum] -->
+## Capabilities
+
+Used Sun component | Current sun elevation | Sunrise     | Sunset      | Daylight duration | Time to sunset |
+------------------ | --------------------- | ----------- | ----------- | ----------------- | -------------- |
+Basic              | :sunny:               | Only future | Only future | :new_moon:        | :sunny:        |
+Extended           | :sunny:               | :sunny:     | :sunny:     | :sunny:           | :sunny:        |
+
+> You have to have mentioned `monitored condition` enabled in `Extended Sun` component:
+> `elevation`, `max elevation`, `daylight`, `sunrise`, `sunset`
 
 ## Options
 
-| Name | Type | Requirement | Description
-| ---- | ---- | ------- | -----------
+| Name | Type   | Requirement  | Description
+| ---- | ------ | ------------ | -----------
 | type | string | **Required** | `custom:sun-card`
 | name | string | **Optional** | Card name
 

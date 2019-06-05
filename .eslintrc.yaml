@@ -20,6 +20,7 @@ rules:
   import/prefer-default-export: 0
   new-cap: ["error", { "newIsCap": false }]
   max-len: ["error", {"code": 120, "ignoreUrls": true}]
+  indent: ["error", 2, {"FunctionDeclaration": {"parameters": "first"}}]
 globals:
   document: true
   window: true

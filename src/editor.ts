@@ -5,7 +5,7 @@ import {
   property,
   TemplateResult,
 } from 'lit-element';
-import { fireEvent } from "./hass";
+import { fireEvent } from './hass';
 
 import { SunCardConfig } from './types';
 

@@ -10,11 +10,11 @@ import {
   css,
 } from 'lit-element';
 
-import { HassEntity } from "home-assistant-js-websocket";
-import { HomeAssistant } from "./hass";
-
 import moment from 'moment';
 import 'moment-timezone';
+
+import { HassEntity } from 'home-assistant-js-websocket';
+import { HomeAssistant } from './hass';
 
 import {
   SunCardConfig,

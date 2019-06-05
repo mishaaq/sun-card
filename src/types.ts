@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { HassEntity } from "home-assistant-js-websocket";
+import { HassEntity } from 'home-assistant-js-websocket';
 
 export interface SunCardConfig {
   type: string;
@@ -134,7 +134,9 @@ class EnhancedSunEntity extends HASunEntity implements SunEntity {
   }
 }
 
-function createSunEntityCtor(ctor: SunEntityConstructor, sunEntity: HassEntity, currentTimeEntity: TimeEntity): SunEntity {
+function createSunEntityCtor(ctor: SunEntityConstructor,
+                             sunEntity: HassEntity,
+                             currentTimeEntity: TimeEntity): SunEntity {
   return new ctor(sunEntity, currentTimeEntity);
 }
 

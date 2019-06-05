@@ -1,6 +1,6 @@
 # Sun Card
 
-Home Assistant Lovelace card to present `sun.sun` entity. Requires `time_date.time_utc` sensors as well to work properly.
+Home Assistant Lovelace card to present `sun.sun` entity. Requires `sensor.time_utc` sensor from `date_time` component as well to work properly.
 It provides visual information about current sun elevation throughout the day, time of sunrise/sunset. Available data depends on used Sun component: pre-existing one from Home Assistant (Basic) or extended available [here](https://github.com/pnbruckner/homeassistant-config/blob/master/docs/sun.md) (Extended).
 
 [![GitHub Release][releases-shield]][releases]
@@ -42,14 +42,14 @@ resources:
 
 ### Manual Installation
 
-1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v2.0/sun-card.min.js)
+1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v2.1/sun-card.js)
 2. Place the file in your `config/www` folder
 3. Include the card code in your `ui-lovelace-card.yaml`
 
 ```yaml
 title: Home
 resources:
-  - url: /local/sun-card.min.js
+  - url: /local/sun-card.js
     type: module
 ```
 

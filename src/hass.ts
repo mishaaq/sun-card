@@ -1,7 +1,7 @@
 import {
   HassConfig,
-  HassEntities
-} from "home-assistant-js-websocket";
+  HassEntities,
+} from 'home-assistant-js-websocket';
 
 export const fireEvent = (
   node: HTMLElement,
@@ -11,7 +11,7 @@ export const fireEvent = (
     bubbles?: boolean,
     cancelable?: boolean,
     composed?: boolean,
-  }
+  },
 ) => {
   options = options || {};
   detail = detail === null || detail === undefined ? {} : detail;

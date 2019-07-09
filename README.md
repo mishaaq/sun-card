@@ -6,6 +6,7 @@ It provides visual information about current sun elevation throughout the day, t
 [![GitHub Release][releases-shield]][releases]
 [![License MIT][license-shield]](LICENSE.md)
 [![Community Forum][forum-shield]](https://community.home-assistant.io/t/lovelace-sun-card/109489)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 
 ## Capabilities
 

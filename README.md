@@ -18,7 +18,7 @@ It provides visual information about current sun elevation throughout the day, t
 
 > You have to have mentioned `monitored_conditions` enabled in component:
 > * for `Extended sun` component: `elevation`, `max_elevation`, `daylight`, `sunrise`, `sunset`
-> * for `Sun2` component: `sunrise`, `sunset`, `noon`, `max_elevation`, `daylight`
+> * for `Sun2` component: `sunrise`, `sunset`, `solar_noon`, `max_elevation`, `daylight`
 
 ## Options
 

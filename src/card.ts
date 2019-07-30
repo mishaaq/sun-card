@@ -247,7 +247,7 @@ class SunCard extends LitElement {
         font-size: 22px;
       }
       svg .event-line {
-        stroke: var(--light-primary-color);
+        stroke: var(--sc-event-line-color, var(--light-primary-color));
       }
       svg .sun {
         fill: var(--sc-sun-color, #ffe160);
@@ -261,7 +261,7 @@ class SunCard extends LitElement {
       svg.bottom .sun {
         fill-opacity: 0.1;
         stroke-width: 4;
-        stroke: var(--light-primary-color);
+        stroke: var(--sc-sun-night-color, var(--light-primary-color));
         stroke-dasharray: 5,5
       }
       .info {

@@ -124,16 +124,14 @@ class SunCard extends LitElement {
 
     const renderSun = (): SVGTemplateResult => {
       const sunPos: Coords = this.metric(currentTimeEntity.time, sunEntity.elevation);
-      return svg`<circle class="sun" cx="${sunPos.x}" cy="${sunPos.y}" r="30" />`;
+      return svg`
+        <line class="sun" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
+      `;
     };
     const renderSunbeam = (): SVGTemplateResult => {
       const sunPos: Coords = this.metric(currentTimeEntity.time, sunEntity.elevation);
       return svg`
-        <circle class="sunbeam" cx="${sunPos.x}" cy="${sunPos.y}" r="29">
-          <animate attributeName="opacity" from="1" to="0" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="r" attributeType="XML" from="29" to="50" dur="3s" fill="remove"
-            begin="0s" repeatCount="indefinite" />
-        </circle>
+        <line class="sunbeam" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
       `;
     };
 
@@ -247,22 +245,28 @@ class SunCard extends LitElement {
         font-size: 22px;
       }
       svg .event-line {
-        stroke: var(--sc-event-line-color, var(--light-primary-color));
+        stroke: var(--sc-event-line-color, #212121);
       }
       svg .sun {
-        fill: var(--sc-sun-color, #ffe160);
-      }
-      svg .sunbeam {
-        fill: var(--sc-sun-color, #ffe160);
-        stroke: var(--sc-sunbeam-color, #fbec5d);
-        stroke-width: 3;
+        stroke: var(--sc-sun-color, #ffe160);
+        stroke-width: var(--sc-sun-size, 60px);
         stroke-linecap: round;
       }
+      @keyframes beam {
+        from { opacity: 1; stroke-width: var(--sc-sun-size, 60px); }
+        to   { opacity: 0; stroke-width: calc(2 * var(--sc-sun-size, 60px)); }
+      }
+      svg .sunbeam {
+        stroke: var(--sc-sunbeam-color, #fbec5d);
+        stroke-width: var(--sc-sun-size, 60px);
+        stroke-linecap: round;
+        opacity: 1;
+        will-change: opacity, stroke-width;
+        animation: beam 3s linear infinite;
+      }
       svg.bottom .sun {
-        fill-opacity: 0.1;
-        stroke-width: 4;
-        stroke: var(--sc-sun-night-color, var(--light-primary-color));
-        stroke-dasharray: 5,5
+        stroke-width: var(--sc-sun-size, 60px);
+        stroke: var(--sc-sun-night-color, #b3e5fc);
       }
       .info {
         display: flex;

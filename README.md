@@ -45,7 +45,7 @@ You can simply change default style of the card specifying CSS variables in your
 ### HACS (recommended)
 
 1. Make sure the [HACS](https://github.com/custom-components/hacs) component is installed and working.
-2. Add this github repository https://github.com/mishaaq/sun-card/ as custom plugin repository in HACS settings.
+2. Add this github repository https://github.com/mishaaq/sun-card as custom plugin repository in HACS settings.
 3. Install the plugin `Sun card` and update lovelace configuration accordingly.
 
 ### Installation and tracking with `custom_updater` (deprecated)

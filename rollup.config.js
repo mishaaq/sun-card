@@ -15,7 +15,8 @@ const commonPlugins = [
     commonjs({
         include: [
             'node_modules/moment/**',
-            'node_modules/moment-timezone/**'
+            'node_modules/moment-timezone/**',
+            'node_modules/humanize-duration-ts/**'
         ],
         sourceMap: false
     }),

@@ -68,7 +68,7 @@ class SunCard extends LitElement {
     return {};
   }
 
-  @property() public hass?: HomeAssistant;
+  @property() private _hass?: HomeAssistant;
 
   @property() private _config?: SunCardConfig;
 
@@ -79,7 +79,7 @@ class SunCard extends LitElement {
   // half of svg viewBox height / (|-zenith| + zenith elevation angle)
   readonly yScale: number = this.svgViewBoxH / 180;
 
-  readonly humanizeDurationLang: HumanizeDurationLanguage = new HumanizeDurationLanguage();
+  readonly humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
 
   public setConfig(config: SunCardConfig): void {
     if (!config || !config.type) {
@@ -87,6 +87,24 @@ class SunCard extends LitElement {
     }
 
     this._config = config;
+  }
+
+  get hass(): HomeAssistant | undefined {
+    return this._hass;
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (hass) {
+      moment.locale(hass.language);
+      moment.tz.setDefault(hass.config.time_zone);
+      this.humanizer.setOptions({
+        language: hass.language,
+        delimiter: ' ',
+        units: ['h', 'm'],
+        round: true,
+      });
+    }
   }
 
   public getCardSize(): number {
@@ -97,15 +115,11 @@ class SunCard extends LitElement {
     if (!this._config || !this.hass) {
       return html``;
     }
-    moment.locale(this.hass.language);
-    moment.tz.setDefault(this.hass.config.time_zone);
-    const humanizer: HumanizeDuration = new HumanizeDuration(this.humanizeDurationLang);
-    humanizer.setOptions({
-      language: this.hass.language,
-      delimiter: ' ',
-      units: ['h', 'm'],
-      round: true,
-    });
+
+    const timeFormat: string =
+      this._config.meridiem === undefined && 'LT' ||
+      this._config.meridiem === true && 'h:mm A' ||
+      'H:mm';
     const { localize, states } = this.hass;
 
     const sunStateObj: HassEntity = states['sun.sun'];
@@ -150,10 +164,10 @@ class SunCard extends LitElement {
         return svg`
           <line class="event-line" x1="${eventPos.x}" y1="0" x2="${eventPos.x}" y2="${-100 * inverter}"/>
           <g transform="translate(${eventPos.x - 100},${-125 * inverter - 25})">
-            <svg viewBox="0 0 100 25" preserveAspectRatio="xMinYMin slice" width="200" height="50">
+            <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
               <path d="${svgData}"></path>
               <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
-                ${event.format('LT')}
+                ${event.format(timeFormat)}
               </text>
             </svg>
           </g>
@@ -180,7 +194,7 @@ class SunCard extends LitElement {
       return html`
         <div>
           <ha-icon slot="item-icon" icon="mdi:weather-sunny"></ha-icon>
-          <span class="item-text">: ${humanizer.humanize(sunEntity.daylight.asMilliseconds())}</span>
+          <span class="item-text">: ${this.humanizer.humanize(sunEntity.daylight.asMilliseconds())}</span>
         </div>
       `;
     };

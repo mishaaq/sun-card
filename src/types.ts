@@ -1,9 +1,11 @@
 import moment from 'moment';
+
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 
 export interface SunCardConfig {
   type: string;
   name?: string;
+  meridiem?: boolean;
 }
 
 export type Coords = {

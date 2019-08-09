@@ -1,7 +1,7 @@
 {
   "sun-card": {
-    "version": "2.1",
-    "remote_location": "https://github.com/mishaaq/sun-card/releases/download/v2.1/sun-card.js",
+    "version": "3.1",
+    "remote_location": "https://github.com/mishaaq/sun-card/releases/download/v3.1/sun-card.js",
     "visit_repo": "https://github.com/mishaaq/sun-card",
     "changelog": "https://github.com/mishaaq/sun-card/releases/latest"
   }

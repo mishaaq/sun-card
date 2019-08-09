@@ -22,10 +22,11 @@ It provides visual information about current sun elevation throughout the day, t
 
 ## Options
 
-| Name | Type   | Requirement  | Description       |
-| ---- | ------ | ------------ | ----------------- |
-| type | string | **Required** | `custom:sun-card` |
-| name | string | **Optional** | Card name         |
+| Name     | Type    | Requirement  | Default value     | Description                  |
+| -------- | ------- | ------------ | ----------------- | ---------------------------- |
+| type     | string  | **Required** | `custom:sun-card` | Type of card, non-modifiable |
+| name     | string  | **Optional** | Language specific | Card name visible in header  |
+| meridiem | boolean | **Optional** | Language specific | Clock format: 12h or 24h     |
 
 ## Themes
 
@@ -34,10 +35,11 @@ You can simply change default style of the card specifying CSS variables in your
 | Variable              | CSS Attribute | Purpose                                          |
 | --------------------- | ------------- | ------------------------------------------------ |
 | --sc-background       | background    | background of the viewport                       |
-| --sc-sun-color        | fill          | Sun fulfillment color                            |
+| --sc-sun-color        | stroke        | Sun fulfillment color                            |
 | --sc-sunbeam-color    | stroke        | Sunbeam stroke color                             |
-| --sc-event-line-color | stroke        | Sunrise, noon and sunset timestamp markers color |
 | --sc-sun-night-color  | stroke        | Sun stroke color when being below horizon        |
+| --sc-sun-size         | stroke-width  | Sun size in pixels, default to 60px              |
+| --sc-event-line-color | stroke        | Sunrise, noon and sunset timestamp markers color |
 | --sc-horizon-color    | stroke        | Horizon line color                               |
 
 ## Installation
@@ -87,7 +89,7 @@ resources:
 <img src="https://raw.githubusercontent.com/mishaaq/sun-card/master/images/showcase.png" width="450px"/>
 
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/c/projects/frontend
+[forum]: https://community.home-assistant.io/t/lovelace-sun-card/109489
 [license-shield]: https://img.shields.io/github/license/mishaaq/sun-card.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/mishaaq/sun-card.svg?style=for-the-badge
 [releases]: https://github.com/mishaaq/sun-card/releases

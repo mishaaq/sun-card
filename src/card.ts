@@ -10,12 +10,16 @@ import {
   css,
 } from 'lit-element';
 
+import {
+  HomeAssistant,
+  LovelaceCardEditor,
+} from 'custom-card-helpers';
+
 import moment from 'moment';
 import 'moment-timezone';
 import { HumanizeDurationLanguage, HumanizeDuration } from 'humanize-duration-ts';
 
 import { HassEntity } from 'home-assistant-js-websocket';
-import { HomeAssistant } from './hass';
 
 import {
   SunCardConfig,
@@ -60,8 +64,8 @@ const SVG_ICONS = {
 
 @customElement('sun-card')
 class SunCard extends LitElement {
-  public static async getConfigElement(): Promise<HTMLElement> {
-    return document.createElement('sun-card-editor');
+  public static async getConfigElement(): Promise<LovelaceCardEditor> {
+    return document.createElement('sun-card-editor') as LovelaceCardEditor;
   }
 
   public static getStubConfig(): object {
@@ -199,8 +203,12 @@ class SunCard extends LitElement {
       `;
     };
 
+    const header = this._config.name === undefined
+      ? sunEntity.friendly_name || localize('domain.sun')
+      : this._config.name;
+
     return html`
-      <ha-card .header=${this._config.name || sunEntity.friendly_name || localize('domain.sun')}>
+      <ha-card .header=${header || null}>
         <div class="content">
           <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
             ${renderSunrise()}

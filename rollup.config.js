@@ -2,9 +2,18 @@ import commonjs from 'rollup-plugin-commonjs';
 import resolve from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
 import json from 'rollup-plugin-json';
-
+import { terser } from 'rollup-plugin-terser';
 
 const commonPlugins = [
+  resolve(),
+  commonjs({
+    include: [
+      'node_modules/moment/**',
+      'node_modules/moment-timezone/**',
+    ],
+    sourceMap: false,
+  }),
+  typescript(),
   json({
     include: [
       'node_modules/moment-timezone/**',
@@ -12,26 +21,14 @@ const commonPlugins = [
     compact: true,
     preferConst: true,
   }),
-  commonjs({
-    include: [
-      'node_modules/moment/**',
-      'node_modules/moment-timezone/**',
-      'node_modules/humanize-duration-ts/**',
-    ],
-    sourceMap: false,
-  }),
-  resolve({
-    mainFields: ['main'],
-  }),
-  typescript(),
+  terser(),
 ];
 
 export default {
   input: 'src/card.ts',
   output: {
     file: 'sun-card.js',
-    format: 'esm',
-    compact: true,
+    format: 'es',
   },
   plugins: [...commonPlugins],
 };

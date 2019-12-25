@@ -22,11 +22,11 @@ It provides visual information about current sun elevation throughout the day, t
 
 ## Options
 
-| Name     | Type    | Requirement  | Default value     | Description                  |
-| -------- | ------- | ------------ | ----------------- | ---------------------------- |
-| type     | string  | **Required** | `custom:sun-card` | Type of card, non-modifiable |
-| name     | string  | **Optional** | Language specific | Card name visible in header  |
-| meridiem | boolean | **Optional** | Language specific | Clock format: 12h or 24h     |
+| Name     | Type    | Requirement  | Default value     | Description                                              |
+| -------- | ------- | ------------ | ----------------- | -------------------------------------------------------- |
+| type     | string  | **Required** | `custom:sun-card` | Type of card, non-modifiable                             |
+| name     | string  | **Optional** | Language specific | Card name visible in header, no header when empty value  |
+| meridiem | boolean | **Optional** | Language specific | Clock format: 12h or 24h                                 |
 
 ## Themes
 
@@ -66,7 +66,7 @@ resources:
 
 ### Manual Installation (not recommended)
 
-1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v2.1/sun-card.js)
+1. Download the [sun-card](https://github.com/mishaaq/sun-card/releases/download/v3.2/sun-card.js)
 2. Place the file in your `config/www` folder
 3. Include the card code in your `ui-lovelace-card.yaml`
 

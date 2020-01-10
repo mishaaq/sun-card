@@ -35,6 +35,22 @@ export class TimeEntity {
   }
 }
 
+export class MoonEntity {
+  private _entity: HassEntity;
+
+  get phase(): string {
+    return this._entity.state;
+  }
+
+  get icon(): string {
+    return this._entity.attributes.icon || '';
+  }
+
+  constructor(haEntity: HassEntity) {
+    this._entity = haEntity;
+  }
+}
+
 export interface SunEntity {
   // get friendly name as defined on hass configuration
   friendly_name?: string;

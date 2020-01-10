@@ -27,6 +27,7 @@ import {
   TimeEntity,
   SunEntity,
   createSunEntity,
+  MoonEntity,
 } from './types';
 
 import './editor';
@@ -80,7 +81,7 @@ class SunCard extends LitElement {
 
   readonly svgViewBoxH: number = 432; // viewBox height in local points
 
-  // half of svg viewBox height / (|-zenith| + zenith elevation angle)
+  // half of svg viewBox height / (| -zenith | + zenith elevation angle)
   readonly yScale: number = this.svgViewBoxH / 180;
 
   readonly humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
@@ -127,6 +128,7 @@ class SunCard extends LitElement {
     const { localize, states } = this.hass;
 
     const sunStateObj: HassEntity = states['sun.sun'];
+    const moonStateObj: HassEntity = states['sensor.moon'];
     const timeStateObj: HassEntity = states['sensor.time_utc'];
 
     if (!sunStateObj || !timeStateObj) {
@@ -139,6 +141,7 @@ class SunCard extends LitElement {
 
     const currentTimeEntity: TimeEntity = new TimeEntity(timeStateObj);
     const sunEntity: SunEntity = createSunEntity(states, currentTimeEntity);
+    const moonEntity: MoonEntity | null = moonStateObj ? new MoonEntity(moonStateObj) : null;
 
     const renderSun = (): SVGTemplateResult => {
       const sunPos: Coords = this.metric(currentTimeEntity.time, sunEntity.elevation);
@@ -203,6 +206,15 @@ class SunCard extends LitElement {
       `;
     };
 
+    const renderMoon = (): TemplateResult => {
+      if (!moonEntity) {
+        return html``;
+      }
+      return html`
+        <ha-icon icon=${moonEntity.icon}></ha-icon>
+      `;
+    };
+
     const header = this._config.name === undefined
       ? sunEntity.friendly_name || localize('domain.sun')
       : this._config.name;
@@ -221,6 +233,9 @@ class SunCard extends LitElement {
             ${renderNoon()}
             ${renderSun()}
           </svg>
+          <div class="moon-icon">
+            ${renderMoon()}
+          </div>
         </div>
         <div class="info">
           ${renderTimeToSunset()}
@@ -252,6 +267,12 @@ class SunCard extends LitElement {
                                                          rgba(171, 220,  40,  0%)));
         display: flex;
         flex-flow: column nowrap;
+        position: relative;
+      }
+      .moon-icon {
+        position: absolute;
+        right: 5px;
+        opacity: 0.5;
       }
       svg {
         width: 100%;
@@ -295,7 +316,7 @@ class SunCard extends LitElement {
         flex-flow: row nowrap;
         padding: 16px;
       }
-      .info > * {
+      .info > div:not(:last-child) {
         margin-right: 30px;
       }
       .info span {

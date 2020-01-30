@@ -1,9 +1,9 @@
-import commonjs from 'rollup-plugin-commonjs';
-import resolve from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
-import json from 'rollup-plugin-json';
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
 import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
+import sizes from 'rollup-plugin-sizes';
 
 const dev = process.env.ROLLUP_WATCH;
 
@@ -17,13 +17,6 @@ const commonPlugins = [
     sourceMap: false,
   }),
   typescript(),
-  json({
-    include: [
-      'node_modules/moment-timezone/**',
-    ],
-    compact: true,
-    preferConst: true,
-  }),
   dev && serve({
     contentBase: 'dist',
     host: '0.0.0.0',
@@ -34,6 +27,7 @@ const commonPlugins = [
     },
   }),
   !dev && terser(),
+  sizes(),
 ];
 
 export default {

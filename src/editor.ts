@@ -15,6 +15,7 @@ import {
 } from 'custom-card-helpers';
 
 import moment from 'moment';
+import 'moment/min/locales';
 
 import { SunCardConfig } from './types';
 

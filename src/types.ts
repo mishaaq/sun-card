@@ -1,4 +1,5 @@
 import moment from 'moment';
+import 'moment/min/locales';
 
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 

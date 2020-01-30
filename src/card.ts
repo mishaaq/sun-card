@@ -16,7 +16,9 @@ import {
 } from 'custom-card-helpers';
 
 import moment from 'moment';
-import 'moment-timezone';
+import 'moment/min/locales';
+import 'moment-timezone/builds/moment-timezone-with-data';
+
 import { HumanizeDurationLanguage, HumanizeDuration } from 'humanize-duration-ts';
 
 import { HassEntity } from 'home-assistant-js-websocket';

@@ -6,5 +6,5 @@ yarn.lock
 package-lock.json
 /src/chart.svg
 .DS_Store
-sun-card.js
-sun-card.min.js
+/dist/
+sun-card.iml

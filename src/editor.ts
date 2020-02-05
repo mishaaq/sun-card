@@ -8,6 +8,8 @@ import {
   css,
 } from 'lit-element';
 
+import { HassEntity } from 'home-assistant-js-websocket';
+
 import {
   HomeAssistant,
   fireEvent,
@@ -18,12 +20,15 @@ import moment from 'moment';
 import 'moment/min/locales';
 
 import { SunCardConfig } from './types';
+import defaultConfig from './config';
 
 @customElement('sun-card-editor')
 export class SunCardEditor extends LitElement implements LovelaceCardEditor {
   @property() private _hass?: HomeAssistant;
 
   @property() private _config?: SunCardConfig;
+
+  private _defaultName?: string;
 
   private _defaultMeridiem?: boolean;
 
@@ -32,8 +37,14 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     this.requestUpdate();
   }
 
-  get hass(): HomeAssistant | undefined {
-    return this._hass;
+  get config(): SunCardConfig {
+    return {
+      ...this._config,
+      ...{
+        ...defaultConfig,
+        ...{ name: this._defaultName, meridiem: this._defaultMeridiem },
+      },
+    };
   }
 
   set hass(hass) {
@@ -41,22 +52,15 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     if (hass) {
       this._defaultMeridiem = moment.localeData(hass.language)
         .longDateFormat('LT').toLowerCase().indexOf('a') > -1;
+      const sunEntity: HassEntity = hass.states['sun.sun'];
+      this._defaultName = sunEntity
+        ? sunEntity.attributes.friendly_name
+        : hass.localize('domain.sun');
     }
   }
 
-  get _name(): string {
-    return this._config!.name !== undefined
-      ? this._config!.name
-      : this._hass!.states['sun.sun'].attributes.friendly_name
-        || this._hass!.localize('domain.sun');
-  }
-
-  get _meridiem(): boolean | undefined {
-    return this._config!.meridiem !== undefined ? this._config!.meridiem : this._defaultMeridiem;
-  }
-
   protected render(): TemplateResult | void {
-    if (!this.hass) {
+    if (!this._hass) {
       return html``;
     }
 
@@ -64,8 +68,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
       <div class="card-config">
         <paper-input
           label="Name"
-          .value="${this._name}"
-          .configValue="${'name'}"
+          .value="${this.config.name}"
+          .configValue="${'[name]'}"
           @value-changed="${this._valueChanged}">
         </paper-input>
         <div class="side-by-side">
@@ -78,31 +82,135 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
             <ha-switch
               class="${this._config!.meridiem === undefined ? 'default' : ''} slotted"
               id="meridiem"
-              .configValue="${'meridiem'}"
-              ?checked="${this._meridiem === true}"
+              .configValue="${'[meridiem]'}"
+              ?checked="${this.config.meridiem === true}"
               @change="${this._valueChanged}">
               12h
             </ha-switch>
+          </div>
+        </div>
+        <div>
+          <div class="side-by-side">
+            <paper-dropdown-menu
+              label="Time"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[time]'}"
+            >
+              ${this._entityDropdown('time', ['sensor'])}
+            </paper-dropdown-menu>
+            <paper-dropdown-menu
+              label="Elevation"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[elevation]'}"
+            >
+              ${this._entityDropdown('elevation', ['sensor', 'sun'])}
+            </paper-dropdown-menu>
+          </div>
+          <div class="side-by-side">
+            <paper-dropdown-menu
+              label="Sunrise"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[sunrise]'}"
+            >
+              ${this._entityDropdown('sunrise', ['sensor', 'sun'])}
+            </paper-dropdown-menu>
+            <paper-dropdown-menu
+              label="Sunset"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[sunset]'}"
+            >
+              ${this._entityDropdown('sunset', ['sensor', 'sun'])}
+            </paper-dropdown-menu>
+          </div>
+          <div class="side-by-side">
+            <paper-dropdown-menu
+              label="Noon"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[noon]'}"
+            >
+              ${this._entityDropdown('noon', ['sensor'])}
+            </paper-dropdown-menu>
+            <paper-dropdown-menu
+              label="Moon"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[moon]'}"
+            >
+              ${this._entityDropdown('moon', ['sensor'])}
+            </paper-dropdown-menu>
           </div>
         </div>
       </div>
     `;
   }
 
+  private _entityDropdown(configName: string, entityDomains: string[]) : TemplateResult {
+    const entities: string[] = this._getAvailableEntities(entityDomains);
+    return html`
+      <paper-listbox
+        slot='dropdown-content'
+        .selected="${entities.indexOf(this.config.entities[configName])}"
+      >
+        ${this._entityItems(entities)}
+      </paper-listbox>
+    `;
+  }
+
+  private _entityItems(entities: string[]): TemplateResult {
+    return html`
+      ${entities.map((entityName) => {
+        const entity = this._hass!.states[entityName];
+        return html`
+          <paper-item value=${entity.entity_id}>
+            <ha-icon .icon=${entity.attributes.icon}></ha-icon>
+            <span>${entity.entity_id}</span>
+          </paper-item>
+        `;
+      })}
+    `;
+  }
+
+  private _getAvailableEntities(ofType?: string[]): string[] {
+    if (!this._hass) {
+      return [];
+    }
+    const { states } = this._hass;
+
+    let entities: string[] = Object.keys(states);
+    if (ofType) entities = entities.filter((entityId) => {
+      return ofType.includes(entityId.substr(0, entityId.indexOf('.')));
+    });
+    return entities.sort();
+  }
+
   private _valueChanged(ev) {
-    if (!this._config || !this.hass) {
+    if (!this._config || !this._hass) {
       return;
     }
     const { target } = ev;
-    if (this[`_${target.configValue}`] === target.value) {
-      return;
-    }
     if (target.configValue) {
-      this._config = {
-        ...this._config,
-        [target.configValue]:
-          target.checked !== undefined ? target.checked : target.value,
-      };
+      const [,
+        objName,
+        propName,
+      ] = target.configValue.match(/^([a-zA-Z][a-zA-Z0-9]+)?(?:\[([a-zA-Z][a-zA-Z0-9]+)\])$/);
+
+      const configObj = objName ? (this.config[objName] || {}) : this.config;
+      if (configObj[propName] === (target.checked !== undefined ? target.checked : target.value)) {
+        return;
+      }
+      if (objName)
+        this._config = {
+          ...this._config,
+          [objName]: {
+            ...this._config[objName],
+            [propName]: target.checked !== undefined ? target.checked : target.value,
+          },
+        };
+      else
+        this._config = {
+          ...this._config,
+          [propName]:
+            target.checked !== undefined ? target.checked : target.value,
+        };
     }
     fireEvent(this, 'config-changed', { config: this._config });
   }
@@ -113,7 +221,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         display: flex;
         flex-flow: row nowrap;
         justify-content: space-between;
-        line-height: var(--paper-font-body1_-_line-height);;
+        line-height: var(--paper-font-body1_-_line-height);
       }
       .label .heading {
         font-size: var(--paper-input-container-shared-input-style_-_font-size)

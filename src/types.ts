@@ -3,8 +3,19 @@ import 'moment/min/locales';
 
 import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 
+export interface SunCardConfigEntities {
+  time: string;
+  elevation: string;
+  max_elevation?: string;
+  sunrise?: string;
+  sunset?: string;
+  noon?: string;
+  moon?: string;
+}
+
 export interface SunCardConfig {
   type: string;
+  entities: SunCardConfigEntities;
   name?: string;
   meridiem?: boolean;
 }

@@ -38,12 +38,15 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
   }
 
   get config(): SunCardConfig {
+    const entitiesConfig = {
+      ...defaultConfig.entities,
+      ...this._config ? this._config.entities : null,
+    };
     return {
+      ...defaultConfig,
+      ...{ name: this._defaultName, meridiem: this._defaultMeridiem },
       ...this._config,
-      ...{
-        ...defaultConfig,
-        ...{ name: this._defaultName, meridiem: this._defaultMeridiem },
-      },
+      entities: entitiesConfig,
     };
   }
 

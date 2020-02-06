@@ -25,48 +25,16 @@ export type Coords = {
   y: number;
 }
 
-// Wrapper for HA time_utc entity (from 'time_date' platform)
-export class TimeEntity {
-  private _entity: HassEntity;
-
-  // get local time from HA time_utc entity
-  get time(): moment.Moment {
-    return moment.utc(this._entity.state, 'h:mm A').local();
-  }
-
-  get hour(): number {
-    return this.time.hour();
-  }
-
-  get minute(): number {
-    return this.time.minute();
-  }
-
-  constructor(haEntity: HassEntity) {
-    this._entity = haEntity;
-  }
+export interface ITime {
+  current_time: moment.Moment;
 }
 
-export class MoonEntity {
-  private _entity: HassEntity;
-
-  get phase(): string {
-    return this._entity.state;
-  }
-
-  get icon(): string {
-    return this._entity.attributes.icon || '';
-  }
-
-  constructor(haEntity: HassEntity) {
-    this._entity = haEntity;
-  }
+export interface IMoon {
+  moon_phase: string;
+  moon_icon: string;
 }
 
-export interface SunEntity {
-  // get friendly name as defined on hass configuration
-  friendly_name?: string;
-
+export interface ISun {
   // get current sun's elevation
   elevation: number;
 
@@ -89,161 +57,34 @@ export interface SunEntity {
   to_sunset: moment.Duration;
 }
 
-interface SunEntityConstructor {
-  new(haEntity: HassEntity, currentTimeEntity: TimeEntity, entities: HassEntities): SunEntity;
+export interface IReader<T> {
+  read(): T;
 }
 
-class HASunEntity implements SunEntity {
-  static accepts(entities: HassEntities): boolean {
-    return Object.hasOwnProperty.call(entities, 'sun.sun');
-  }
+export function convert<U>(converter: (v: any) => U) {
+  return function decorator(_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
+    const method = descriptor.value;
+    if (!method || typeof method !== 'function') return;
+    descriptor.value = function decorated(...args: any[]) {
+      const value: any = method.apply(this, args);
+      return converter.call(this, value);
+    };
+    return descriptor;
+  };
+}
 
+export class EntityReader {
   protected _entity: HassEntity;
 
-  protected _timeEntity: TimeEntity;
-
-  get friendly_name(): string | undefined {
-    return this._entity.attributes.friendly_name;
+  state(): string {
+    return this._entity.state;
   }
 
-  get elevation(): number {
-    return this._entity.attributes.elevation;
+  attr(name: string): any {
+    return this._entity.attributes[name];
   }
 
-  get max_elevation(): number {
-    return 90;
+  constructor(entity: HassEntity) {
+    this._entity = entity;
   }
-
-  get solar_noon(): moment.Moment {
-    return moment.invalid();
-  }
-
-  get sunrise(): moment.Moment {
-    let nextSunrise = moment.utc(this._entity.attributes.next_rising).local();
-    if (this._timeEntity.time.day() !== nextSunrise.day()) {
-      nextSunrise = moment.invalid();
-    }
-    return nextSunrise;
-  }
-
-  get sunset(): moment.Moment {
-    let nextSunset = moment.utc(this._entity.attributes.next_setting).local();
-    if (this._timeEntity.time.day() !== nextSunset.day()) {
-      nextSunset = moment.invalid();
-    }
-    return nextSunset;
-  }
-
-  get daylight(): moment.Duration {
-    return moment.duration(NaN);
-  }
-
-  get to_sunset(): moment.Duration {
-    // returns invalid Duration in case of invalid sunset time
-    return moment.duration(this.sunset.diff(this._timeEntity.time));
-  }
-
-  constructor(haEntity: HassEntity, currentTimeEntity: TimeEntity) {
-    this._entity = haEntity;
-    this._timeEntity = currentTimeEntity;
-  }
-}
-
-class EnhancedSunEntity extends HASunEntity implements SunEntity {
-  static accepts(entities: HassEntities): boolean {
-    return HASunEntity.accepts(entities) &&
-      ['elevation', 'max_elevation', 'sunrise', 'sunset', 'daylight'].every((attribute: string): boolean => {
-        return Object.hasOwnProperty.call(entities['sun.sun'].attributes, attribute);
-      });
-  }
-
-  get max_elevation(): number {
-    return this._entity.attributes.max_elevation;
-  }
-
-  get daylight(): moment.Duration {
-    return moment.duration(this._entity.attributes.daylight, 'seconds');
-  }
-
-  get sunrise(): moment.Moment {
-    return moment.utc(this._entity.attributes.sunrise).local();
-  }
-
-  get sunset(): moment.Moment {
-    return moment.utc(this._entity.attributes.sunset).local();
-  }
-
-  get to_sunset(): moment.Duration {
-    return moment.duration(this.sunset.diff(this._timeEntity.time));
-  }
-}
-
-class Sun2CombinedEntity extends HASunEntity implements SunEntity {
-  static accepts(entities: HassEntities): boolean {
-    return HASunEntity.accepts(entities) &&
-      ['sensor.max_elevation',
-       'sensor.sunrise',
-       'sensor.sunset',
-       'sensor.daylight',
-       'sensor.solar_noon'].every((entityName: string): boolean => {
-        return Object.hasOwnProperty.call(entities, entityName);
-      });
-  }
-
-  protected _max_elevation: HassEntity;
-
-  protected _sunrise: HassEntity;
-
-  protected _sunset: HassEntity;
-
-  protected _daylight: HassEntity;
-
-  protected _solar_noon: HassEntity;
-
-  get max_elevation(): number {
-    return parseFloat(this._max_elevation.state);
-  }
-
-  get daylight(): moment.Duration {
-    return moment.duration(this._daylight.attributes.today_hms);
-  }
-
-  get sunrise(): moment.Moment {
-    return moment.parseZone(this._sunrise.state);
-  }
-
-  get sunset(): moment.Moment {
-    return moment.parseZone(this._sunset.state);
-  }
-
-  get solar_noon(): moment.Moment {
-    return moment.parseZone(this._solar_noon.state);
-  }
-
-  constructor(haEntity: HassEntity, currentTimeEntity: TimeEntity, additionalEntities: HassEntities) {
-    super(haEntity, currentTimeEntity);
-    this._max_elevation = additionalEntities['sensor.max_elevation'];
-    this._sunrise = additionalEntities['sensor.sunrise'];
-    this._sunset = additionalEntities['sensor.sunset'];
-    this._daylight = additionalEntities['sensor.daylight'];
-    this._solar_noon = additionalEntities['sensor.solar_noon'];
-  }
-}
-
-function createSunEntityCtor(ctor: SunEntityConstructor,
-                             entities: HassEntities,
-                             currentTimeEntity: TimeEntity): SunEntity {
-  const sunEntity: HassEntity = entities['sun.sun'];
-  return new ctor(sunEntity, currentTimeEntity, entities);
-}
-
-export function createSunEntity(entities: HassEntities, currentTime: TimeEntity) : SunEntity {
-  const chain = [Sun2CombinedEntity, EnhancedSunEntity, HASunEntity];
-  const ctor = chain.find((cls): boolean => {
-    return cls.accepts(entities);
-  });
-  if (!ctor) {
-    throw new Error('Couldn\'t find corresponding class');
-  }
-  return createSunEntityCtor(ctor, entities, currentTime);
 }

@@ -21,18 +21,17 @@ import 'moment-timezone/builds/moment-timezone-with-data';
 
 import { HumanizeDurationLanguage, HumanizeDuration } from 'humanize-duration-ts';
 
-import { HassEntity } from 'home-assistant-js-websocket';
-
 import {
   SunCardConfig,
   Coords,
-  TimeEntity,
-  SunEntity,
-  createSunEntity,
-  MoonEntity,
+  ISun,
+  IMoon,
+  ITime,
 } from './types';
 
 import './editor';
+import { Factory } from './entities';
+import defaultConfig from './config';
 
 const SVG_ICONS = {
   sunrise: 'M3,12H7C7,9.24 9.24,7 12,7C14.76,7 17,9.24 17,12H21C21.55,12 22,12.45 22,13C22,13.55 21.55,' +
@@ -79,6 +78,12 @@ class SunCard extends LitElement {
 
   @property() private _config?: SunCardConfig;
 
+  @property() private _provider?: ISun & IMoon & ITime;
+
+  @property() private _timeFormat: string = 'LT';
+
+  @property() private _headerText?: string | undefined;
+
   readonly svgViewBoxW: number = 24 * 60; // 24h * 60 minutes - viewBox width in local points
 
   readonly svgViewBoxH: number = 432; // viewBox height in local points
@@ -92,8 +97,26 @@ class SunCard extends LitElement {
     if (!config || !config.type) {
       throw new Error('Invalid configuration');
     }
-
     this._config = config;
+
+    this._timeFormat =
+      this._config.meridiem === undefined && 'LT' ||
+      this._config.meridiem === true && 'h:mm A' ||
+      'H:mm';
+
+    this._headerText = config.name || this._headerText;
+  }
+
+  get config(): SunCardConfig {
+    const entitiesConfig = {
+      ...defaultConfig.entities,
+      ...this._config ? this._config.entities : null,
+    };
+    return {
+      ...defaultConfig,
+      ...this._config,
+      entities: entitiesConfig,
+    };
   }
 
   get hass(): HomeAssistant | undefined {
@@ -111,6 +134,12 @@ class SunCard extends LitElement {
         units: ['h', 'm'],
         round: true,
       });
+
+      this._provider = Factory.create(hass.states, this.config);
+
+      if (this._headerText === undefined)
+        this._headerText = hass.states['sun.sun'].attributes.friendly_name
+          || hass.localize('domain.sun');
     }
   }
 
@@ -119,40 +148,22 @@ class SunCard extends LitElement {
   }
 
   protected render(): TemplateResult | void {
-    if (!this._config || !this.hass) {
+    if (!this._config || !this.hass || !this._provider) {
       return html``;
     }
 
-    const timeFormat: string =
-      this._config.meridiem === undefined && 'LT' ||
-      this._config.meridiem === true && 'h:mm A' ||
-      'H:mm';
-    const { localize, states } = this.hass;
-
-    const sunStateObj: HassEntity = states['sun.sun'];
-    const moonStateObj: HassEntity = states['sensor.moon'];
-    const timeStateObj: HassEntity = states['sensor.time_utc'];
-
-    if (!sunStateObj || !timeStateObj) {
-      return html`
-        <hui-warning>
-          ${localize('ui.panel.lovelace.warning.entity_not_found', 'entity', 'sun.sun, sensor.time_utc')}
-        </hui-warning>
-      `;
-    }
-
-    const currentTimeEntity: TimeEntity = new TimeEntity(timeStateObj);
-    const sunEntity: SunEntity = createSunEntity(states, currentTimeEntity);
-    const moonEntity: MoonEntity | null = moonStateObj ? new MoonEntity(moonStateObj) : null;
+    const currentTimeEntity: ITime = this._provider;
+    const sunEntity: ISun = this._provider;
+    const moonEntity: IMoon = this._provider;
 
     const renderSun = (): SVGTemplateResult => {
-      const sunPos: Coords = this.metric(currentTimeEntity.time, sunEntity.elevation);
+      const sunPos: Coords = this.metric(currentTimeEntity.current_time, sunEntity.elevation);
       return svg`
         <line class="sun" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
       `;
     };
     const renderSunbeam = (): SVGTemplateResult => {
-      const sunPos: Coords = this.metric(currentTimeEntity.time, sunEntity.elevation);
+      const sunPos: Coords = this.metric(currentTimeEntity.current_time, sunEntity.elevation);
       return svg`
         <line class="sunbeam" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
       `;
@@ -176,7 +187,7 @@ class SunCard extends LitElement {
             <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
               <path d="${svgData}"></path>
               <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
-                ${event.format(timeFormat)}
+                ${event.format(this._timeFormat)}
               </text>
             </svg>
           </g>
@@ -213,16 +224,12 @@ class SunCard extends LitElement {
         return html``;
       }
       return html`
-        <ha-icon icon=${moonEntity.icon}></ha-icon>
+        <ha-icon icon=${moonEntity.moon_icon}></ha-icon>
       `;
     };
 
-    const header = this._config.name === undefined
-      ? sunEntity.friendly_name || localize('domain.sun')
-      : this._config.name;
-
     return html`
-      <ha-card .header=${header || null}>
+      <ha-card .header=${this._headerText || null}>
         <div class="content">
           <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
             ${renderSunrise()}

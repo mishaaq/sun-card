@@ -153,22 +153,17 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         slot='dropdown-content'
         .selected="${entities.indexOf(this.config.entities[configName])}"
       >
-        ${this._entityItems(entities)}
+        ${entities.map((entityName) => { return this._entityItem(this._hass!.states[entityName]); })}
       </paper-listbox>
     `;
   }
 
-  private _entityItems(entities: string[]): TemplateResult {
+  private _entityItem(entity: HassEntity): TemplateResult {
     return html`
-      ${entities.map((entityName) => {
-        const entity = this._hass!.states[entityName];
-        return html`
-          <paper-item value=${entity.entity_id}>
-            <ha-icon .icon=${entity.attributes.icon}></ha-icon>
-            <span>${entity.entity_id}</span>
-          </paper-item>
-        `;
-      })}
+      <paper-item value=${entity.entity_id}>
+        <ha-icon .icon=${entity.attributes.icon}></ha-icon>
+        <span>${entity.entity_id}</span>
+      </paper-item>
     `;
   }
 

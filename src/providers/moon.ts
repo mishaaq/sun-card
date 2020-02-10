@@ -1,6 +1,6 @@
 import { HassEntity } from 'home-assistant-js-websocket';
 
-import { IReader, EntityReader } from '../types';
+import { IReader, EntityWrapper, ValueProvider } from '../types';
 
 class EmptyReader implements IReader<string> {
   read(): string {
@@ -8,20 +8,26 @@ class EmptyReader implements IReader<string> {
   }
 }
 
-export const prepareMoonPhaseReader = (entity?: HassEntity): IReader<string> => {
-  if (!entity) return new EmptyReader();
-  return new class extends EntityReader implements IReader<string> {
+export const createMoonPhase = (entity?: HassEntity): ValueProvider<string> => {
+  if (!entity) {
+    return [new EmptyReader(), undefined];
+  }
+  const entityReader = new class extends EntityWrapper implements IReader<string> {
     read(): string {
       return this.state();
     }
   }(entity);
+  return [entityReader, entityReader.mutator()];
 };
 
-export const prepareMoonIconReader = (entity?: HassEntity): IReader<string> => {
-  if (!entity) return new EmptyReader();
-  return new class extends EntityReader implements IReader<string> {
+export const createMoonIcon = (entity?: HassEntity): ValueProvider<string> => {
+  if (!entity) {
+    return [new EmptyReader(), undefined];
+  }
+  const entityReader = new class extends EntityWrapper implements IReader<string> {
     read(): string {
       return this.attr('icon');
     }
   }(entity);
+  return [entityReader, entityReader.mutator()];
 };

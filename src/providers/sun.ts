@@ -2,7 +2,9 @@ import { HassEntity } from 'home-assistant-js-websocket';
 import moment from 'moment';
 import 'moment/min/locales';
 
-import { IReader, EntityReader, convert } from '../types';
+import {
+  IReader, EntityWrapper, convert, ValueProvider,
+} from '../types';
 
 class InvalidMomentReader implements IReader<moment.Moment> {
   read(): moment.Moment {
@@ -11,7 +13,7 @@ class InvalidMomentReader implements IReader<moment.Moment> {
 }
 
 function prepareReader<U>(converter: (v: any) => U, attr?: string) {
-  class Reader extends EntityReader implements IReader<U> {
+  class Reader extends EntityWrapper implements IReader<U> {
     @convert<U>(converter)
     read(): U {
       return attr ? this.attr(attr) : this.state();
@@ -20,28 +22,30 @@ function prepareReader<U>(converter: (v: any) => U, attr?: string) {
   return Reader;
 }
 
-export const prepareElevationReader = (entity: HassEntity): IReader<number> => {
+export const createElevation = (entity: HassEntity): ValueProvider<number> => {
   const ReaderClass = prepareReader(parseFloat, entity.entity_id === 'sun.sun' ? 'elevation' : undefined);
-  return new ReaderClass(entity);
+  const entityReader = new ReaderClass(entity);
+  return [entityReader, entityReader.mutator()];
 };
 
-export const prepareMaxElevationReader = (entity?: HassEntity): IReader<number> => {
+export const createMaxElevation = (entity?: HassEntity): ValueProvider<number> => {
   if (!entity || entity.entity_id === 'sun.sun' &&
     !Object.prototype.hasOwnProperty.call(entity.attributes, 'max_elevation')) {
     // standard Sun entity reader
-    return new class implements IReader<number> {
+    return [new class implements IReader<number> {
       read(): number {
         return 90;
       }
-    }();
+    }(), undefined];
   }
   const ReaderClass = prepareReader(parseFloat, entity.entity_id === 'sun.sun' ? 'max_elevation' : undefined);
-  return new ReaderClass(entity);
+  const entityReader = new ReaderClass(entity);
+  return [entityReader, entityReader.mutator()];
 };
 
-export const prepareSunriseReader = (entity?: HassEntity): IReader<moment.Moment> => {
+export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return new InvalidMomentReader();
+    return [new InvalidMomentReader(), undefined];
   }
 
   let converter: (val: any) => moment.Moment = (time: any) => {
@@ -56,12 +60,13 @@ export const prepareSunriseReader = (entity?: HassEntity): IReader<moment.Moment
   } else
     converter = moment.parseZone;
   const ReaderClass = prepareReader(converter, attribute);
-  return new ReaderClass(entity);
+  const entityReader = new ReaderClass(entity);
+  return [entityReader, entityReader.mutator()];
 };
 
-export const prepareSunsetReader = (entity?: HassEntity): IReader<moment.Moment> => {
+export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return new InvalidMomentReader();
+    return [new InvalidMomentReader(), undefined];
   }
 
   let converter: (val: any) => moment.Moment = (time: any) => {
@@ -76,13 +81,16 @@ export const prepareSunsetReader = (entity?: HassEntity): IReader<moment.Moment>
   } else
     converter = moment.parseZone;
   const ReaderClass = prepareReader(converter, attribute);
-  return new ReaderClass(entity);
+  const entityReader = new ReaderClass(entity);
+  return [entityReader, entityReader.mutator()];
 };
 
-export const prepareNoonReader = (entity?: HassEntity): IReader<moment.Moment> => {
+export const createNoon = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return new InvalidMomentReader();
+    return [new InvalidMomentReader(), undefined];
   }
 
-  return new (prepareReader(moment.parseZone))(entity);
+  const ReaderClass = prepareReader(moment.parseZone);
+  const entityReader = new ReaderClass(entity);
+  return [entityReader, entityReader.mutator()];
 };

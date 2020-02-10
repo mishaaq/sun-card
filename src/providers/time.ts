@@ -3,9 +3,9 @@ import 'moment/min/locales';
 
 import { HassEntity } from 'home-assistant-js-websocket';
 
-import { EntityReader, IReader } from '../types';
+import { EntityWrapper, IReader, ValueProvider } from '../types';
 
-class TimeUTCReader extends EntityReader implements IReader<moment.Moment> {
+class TimeUTCReader extends EntityWrapper implements IReader<moment.Moment> {
   // get local time from HA time_utc entity
   read(): moment.Moment {
     return moment.utc(this.state(), 'h:mm A').local();
@@ -22,8 +22,10 @@ class BrowserTimeReader implements IReader<moment.Moment> {
   }
 }
 
-export const prepareCurrentTimeReader = (entity: HassEntity): IReader<moment.Moment> => {
-  return TimeUTCReader.accepts(entity)
-    ? new TimeUTCReader(entity)
-    : new BrowserTimeReader();
+export const createCurrentTime = (entity: HassEntity): ValueProvider<moment.Moment> => {
+  if (!TimeUTCReader.accepts(entity)) {
+    return [new BrowserTimeReader(), undefined];
+  }
+  const entityReader = new TimeUTCReader(entity);
+  return [entityReader, entityReader.mutator()];
 };

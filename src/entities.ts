@@ -9,17 +9,18 @@ import {
   ISun,
   IReader,
   SunCardConfig,
+  EntityMutator,
 } from './types';
 
-import { prepareCurrentTimeReader } from './providers/time';
+import { createCurrentTime } from './providers/time';
 import {
-  prepareElevationReader,
-  prepareMaxElevationReader,
-  prepareNoonReader,
-  prepareSunriseReader,
-  prepareSunsetReader,
+  createElevation,
+  createMaxElevation,
+  createNoon,
+  createSunrise,
+  createSunset,
 } from './providers/sun';
-import { prepareMoonPhaseReader, prepareMoonIconReader } from './providers/moon';
+import { createMoonPhase, createMoonIcon } from './providers/moon';
 
 /* TODO: add validations */
 class DataProvider implements ISun, IMoon, ITime {
@@ -93,33 +94,90 @@ class DataProvider implements ISun, IMoon, ITime {
   }
 }
 
+class EntitiesDirectory {
+  private _directory: {[entity: string]: EntityMutator[]} = {};
+
+  add(name: string|undefined, mutator: EntityMutator|undefined): EntitiesDirectory {
+    if (!name || !mutator) return this;
+    if (!this._directory[name]) {
+      this._directory[name] = [];
+    }
+    this._directory[name].push(mutator);
+    return this;
+  }
+
+  create(): EntityMutator {
+    return (entity: HassEntity) => {
+      const mutators: EntityMutator[] = this._directory[entity.entity_id];
+      mutators.forEach(update => update(entity));
+    };
+  }
+}
+
 export class Factory {
-  static create(entities: HassEntities, config: SunCardConfig): DataProvider {
-    return new DataProvider(
-      prepareCurrentTimeReader(entities[config.entities.time]),
-      prepareElevationReader(entities[config.entities.elevation]),
-      prepareMaxElevationReader(
-        this.getEntity(entities, config.entities.max_elevation),
-      ),
-      prepareNoonReader(
-        this.getEntity(entities, config.entities.noon),
-      ),
-      prepareSunriseReader(
-        this.getEntity(entities, config.entities.sunrise),
-      ),
-      prepareSunsetReader(
-        this.getEntity(entities, config.entities.sunset),
-      ),
-      prepareMoonPhaseReader(
-        this.getEntity(entities, config.entities.moon),
-      ),
-      prepareMoonIconReader(
-        this.getEntity(entities, config.entities.moon),
-      ),
+  static create(entities: HassEntities, config: SunCardConfig): [DataProvider, EntityMutator] {
+    const directory: EntitiesDirectory = new EntitiesDirectory();
+
+    const [
+      currentTime,
+      currentTimeUpdater,
+    ] = createCurrentTime(entities[config.entities.time]);
+
+    const [
+      elevation,
+      elevationUpdater,
+    ] = createElevation(entities[config.entities.elevation]);
+
+    const [
+      maxElevation,
+      maxElevationUpdater,
+    ] = createMaxElevation(
+      this.getEntity(entities, config.entities.max_elevation),
     );
+
+    const [
+      noon,
+      noonUpdater,
+    ] = createNoon(this.getEntity(entities, config.entities.noon));
+
+    const [
+      sunrise,
+      sunriseUpdater,
+    ] = createSunrise(this.getEntity(entities, config.entities.sunrise));
+
+    const [
+      sunset,
+      sunsetUpdater,
+    ] = createSunset(this.getEntity(entities, config.entities.sunset));
+
+    const [
+      moonPhase,
+      moonPhaseUpdater,
+    ] = createMoonPhase(this.getEntity(entities, config.entities.moon));
+
+    const [
+      moonIcon,
+      moonIconUpdater,
+    ] = createMoonIcon(this.getEntity(entities, config.entities.moon));
+
+    directory.add(config.entities.time, currentTimeUpdater);
+    directory.add(config.entities.elevation, elevationUpdater);
+    directory.add(config.entities.max_elevation, maxElevationUpdater);
+    directory.add(config.entities.noon, noonUpdater);
+    directory.add(config.entities.sunrise, sunriseUpdater);
+    directory.add(config.entities.sunset, sunsetUpdater);
+    directory.add(config.entities.moon, moonPhaseUpdater);
+    directory.add(config.entities.moon, moonIconUpdater);
+
+    const provider = new DataProvider(
+      currentTime, elevation, maxElevation, noon, sunrise, sunset, moonPhase, moonIcon,
+    );
+
+    return [provider, directory.create()];
   }
 
   private static getEntity(entities: HassEntities, entityName: string | undefined): HassEntity | undefined {
+    /* Add error handling for unavailable entities */
     return entityName ? entities[entityName] : undefined;
   }
 }

@@ -30,6 +30,7 @@ import {
   ISun,
   IMoon,
   ITime,
+  EntityMutator,
 } from './types';
 
 import './editor';
@@ -37,11 +38,11 @@ import { Factory } from './entities';
 import defaultConfig from './config';
 
 /* eslint no-console: 0 */
-console.info(
-  `%c  Sun Card \n%c  ${CARD_VERSION}    `,
-  'color: orange; font-weight: bold; background: black',
-  'color: white; font-weight: bold; background: dimgray',
-);
+console.info(`%c SUN-CARD %c ${CARD_VERSION} `,
+  'color: white; background: coral; font-weight: 700;',
+  'color: coral; background: white; font-weight: 700;');
+
+let updateFunc: EntityMutator|undefined;
 
 @customElement('sun-card')
 class SunCard extends LitElement {
@@ -57,11 +58,7 @@ class SunCard extends LitElement {
 
   @property() private _config?: SunCardConfig;
 
-  @property() private _provider?: ISun & IMoon & ITime;
-
-  @property() private _timeFormat: string = 'LT';
-
-  @property() private _headerText?: string | undefined;
+  private _provider?: ISun & IMoon & ITime;
 
   readonly svgViewBoxW: number = 24 * 60; // 24h * 60 minutes - viewBox width in local points
 
@@ -72,18 +69,11 @@ class SunCard extends LitElement {
 
   readonly humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
 
-  public setConfig(config: SunCardConfig): void {
-    if (!config || !config.type) {
+  public setConfig(newConfig: SunCardConfig): void {
+    if (!newConfig || !newConfig.type) {
       throw new Error('Invalid configuration');
     }
-    this._config = config;
-
-    this._timeFormat =
-      this._config.meridiem === undefined && 'LT' ||
-      this._config.meridiem === true && 'h:mm A' ||
-      'H:mm';
-
-    this._headerText = config.name || this._headerText;
+    this._config = newConfig;
   }
 
   get config(): SunCardConfig {
@@ -113,13 +103,34 @@ class SunCard extends LitElement {
         units: ['h', 'm'],
         round: true,
       });
-
-      this._provider = Factory.create(hass.states, this.config);
-
-      if (this._headerText === undefined)
-        this._headerText = hass.states['sun.sun'].attributes.friendly_name
-          || hass.localize('domain.sun');
     }
+  }
+
+  protected shouldUpdate(changedProps: PropertyValues): boolean {
+    if (changedProps.has('_config')) {
+      return true;
+    }
+
+    const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
+    return oldHass
+      ? Object.values(this.config!.entities).some((entityName) => {
+        return oldHass.states[entityName] !== this.hass!.states[entityName];
+      })
+      : false;
+  }
+
+  protected update(changedProps: PropertyValues) {
+    if (changedProps.has('_config')) {
+      [this._provider, updateFunc] = Factory.create(this.hass!.states, this.config);
+    }
+    const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
+    if (oldHass) {
+      Object.values(this.config!.entities).forEach((entityName) => {
+        if (oldHass.states[entityName] !== this.hass!.states[entityName]) updateFunc!(this.hass!.states[entityName]);
+      });
+    }
+
+    super.update(changedProps);
   }
 
   public getCardSize(): number {
@@ -148,6 +159,10 @@ class SunCard extends LitElement {
       `;
     };
 
+    const timeFormat =
+      this._config!.meridiem === undefined && 'LT' ||
+      this._config!.meridiem === true && 'h:mm A' ||
+      'H:mm';
     const sunrise: [string, moment.Moment] = [SVG_ICONS.sunrise, sunEntity.sunrise];
     const noon: [string, moment.Moment] = [SVG_ICONS.noon, sunEntity.solar_noon];
     const sunset: [string, moment.Moment] = [SVG_ICONS.sunset, sunEntity.sunset];
@@ -166,7 +181,7 @@ class SunCard extends LitElement {
             <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
               <path d="${svgData}"></path>
               <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
-                ${event.format(this._timeFormat)}
+                ${event.format(timeFormat)}
               </text>
             </svg>
           </g>
@@ -207,8 +222,11 @@ class SunCard extends LitElement {
       `;
     };
 
+    const header = this._config.name
+      || this.hass.states['sun.sun'].attributes.friendly_name
+      || this.hass.localize('domain.sun');
     return html`
-      <ha-card .header=${this._headerText || null}>
+      <ha-card .header=${header}>
         <div class="content">
           <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
             ${renderSunrise()}

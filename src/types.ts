@@ -73,7 +73,7 @@ export function convert<U>(converter: (v: any) => U) {
   };
 }
 
-export class EntityReader {
+export class EntityWrapper {
   protected _entity: HassEntity;
 
   state(): string {
@@ -84,7 +84,16 @@ export class EntityReader {
     return this._entity.attributes[name];
   }
 
+  mutator(): EntityMutator {
+    return (entity) => { this._entity = entity; };
+  }
+
   constructor(entity: HassEntity) {
     this._entity = entity;
   }
 }
+
+export type EntityMutator = (entity: HassEntity) => void;
+
+export interface ValueProvider<R> extends Array<IReader<R>|EntityMutator|undefined>
+  {0: IReader<R>, 1: EntityMutator|undefined}

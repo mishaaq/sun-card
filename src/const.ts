@@ -1,4 +1,4 @@
-export const CARD_VERSION = '3.4';
+export const CARD_VERSION = '__VERSION__';
 
 export const SVG_ICONS = {
   sunrise: 'M3,12H7C7,9.24 9.24,7 12,7C14.76,7 17,9.24 17,12H21C21.55,12 22,12.45 22,13C22,13.55 21.55,' +

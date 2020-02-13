@@ -2,6 +2,7 @@ import moment from 'moment';
 import 'moment/min/locales';
 
 import { HassEntity } from 'home-assistant-js-websocket';
+import { LovelaceCardConfig } from 'custom-card-helpers';
 
 export interface SunCardConfigEntities {
   time: string;
@@ -13,8 +14,7 @@ export interface SunCardConfigEntities {
   moon_phase?: string;
 }
 
-export interface SunCardConfig {
-  type: string;
+export interface SunCardConfig extends LovelaceCardConfig {
   entities: SunCardConfigEntities;
   name?: string;
   meridiem?: boolean;

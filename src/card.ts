@@ -31,11 +31,11 @@ import {
   IMoon,
   ITime,
   EntityMutator,
+  SunCardConfigEntities,
 } from './types';
 
 import './editor';
 import { Factory } from './entities';
-import defaultConfig from './config';
 
 /* eslint no-console: 0 */
 console.info(`%c SUN-CARD %c ${CARD_VERSION} `,
@@ -72,22 +72,14 @@ class SunCard extends LitElement {
   readonly humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
 
   public setConfig(newConfig: SunCardConfig): void {
-    if (!newConfig || !newConfig.type) {
-      throw new Error('Invalid configuration');
+    const entities = {
+      ...{ time: 'sensor.time_utc', elevation: 'sun.sun' },
+      ...newConfig.entities,
+    };
+    if (!newConfig?.type || entities.time === '' || entities.elevation === '') {
+      throw new Error('Invalid configuration: missing entities for "time" or "elevation"!');
     }
-    this._config = newConfig;
-  }
-
-  get config(): SunCardConfig {
-    const entitiesConfig = {
-      ...defaultConfig.entities,
-      ...this._config?.entities,
-    };
-    return {
-      ...defaultConfig,
-      ...this._config,
-      entities: entitiesConfig,
-    };
+    this._config = { ...newConfig, entities };
   }
 
   get hass(): HomeAssistant | undefined {
@@ -115,7 +107,7 @@ class SunCard extends LitElement {
 
     const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
     return oldHass
-      ? Object.values(this.config!.entities).some((entityName) => {
+      ? Object.values(this._config!.entities).some((entityName) => {
         return oldHass.states[entityName] !== this.hass!.states[entityName];
       })
       : false;
@@ -125,17 +117,18 @@ class SunCard extends LitElement {
     try {
       if (changedProps.has('_config')) {
         this._error = undefined;
-        [this._provider, updateFunc] = Factory.create(this.hass!.states, this.config);
+        [this._provider, updateFunc] = Factory.create(this.hass!.states, this._config!);
       }
 
       const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
       if (oldHass && this._provider) {
-        Object.values(this.config!.entities).forEach((entityName) => {
+        Object.values(this._config!.entities).forEach((entityName) => {
           if (oldHass.states[entityName] !== this.hass!.states[entityName]) updateFunc!(this.hass!.states[entityName]);
         });
       }
     } catch (e) {
       this._error = e;
+      console.error(e);
     }
     return super.update(changedProps);
   }
@@ -150,7 +143,7 @@ class SunCard extends LitElement {
         <hui-warning>
           ${this._error.message}
         </hui-warning>
-      `
+      `;
     }
 
     if (!this._config || !this.hass || !this._provider) {
@@ -238,7 +231,7 @@ class SunCard extends LitElement {
     };
 
     const header = this._config.name
-      || this.hass.states['sun.sun'].attributes.friendly_name
+      || this.hass.states['sun.sun']?.attributes.friendly_name
       || this.hass.localize('domain.sun');
     return html`
       <ha-card .header=${header}>

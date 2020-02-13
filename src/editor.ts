@@ -20,17 +20,12 @@ import moment from 'moment';
 import 'moment/min/locales';
 
 import { SunCardConfig } from './types';
-import defaultConfig from './config';
 
 @customElement('sun-card-editor')
 export class SunCardEditor extends LitElement implements LovelaceCardEditor {
   @property() private _hass?: HomeAssistant;
 
   @property() private _config?: SunCardConfig;
-
-  private _defaultName?: string;
-
-  private _defaultMeridiem?: boolean;
 
   public setConfig(config: SunCardConfig) : void {
     this._config = config;
@@ -39,30 +34,25 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
 
   get config(): SunCardConfig {
     const entitiesConfig = {
-      ...defaultConfig.entities,
+      ...{ time: 'sensor.time_utc', elevation: 'sun.sun' },
       ...this._config?.entities,
     };
     return {
-      ...defaultConfig,
-      ...{ name: this._defaultName, meridiem: this._defaultMeridiem },
+      ...{
+        name: this._hass?.states['sun.sun']?.attributes.friendly_name || this._hass?.localize('domain.sun'),
+        meridiem: moment.localeData(this._hass?.language)
+          .longDateFormat('LT').toLowerCase().indexOf('a') > -1,
+      } as SunCardConfig,
       ...this._config,
-      entities: entitiesConfig,
+      ...{ entities: entitiesConfig },
     };
   }
 
-  set hass(hass: HomeAssistant | undefined) {
+  set hass(hass: HomeAssistant) {
     this._hass = hass;
-    if (hass) {
-      this._defaultMeridiem = moment.localeData(hass.language)
-        .longDateFormat('LT').toLowerCase().indexOf('a') > -1;
-      const sunEntity: HassEntity = hass.states['sun.sun'];
-      this._defaultName = sunEntity
-        ? sunEntity.attributes.friendly_name
-        : hass.localize('domain.sun');
-    }
   }
 
-  protected render(): TemplateResult | void {
+  protected render(): TemplateResult {
     if (!this._hass) {
       return html``;
     }
@@ -71,6 +61,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
       <div class="card-config">
         <paper-input
           label="Name"
+          id="name"
+          class="${this.classesForItem(this._config!.name, true)}"
           .value="${this.config.name}"
           .configValue="${'[name]'}"
           @value-changed="${this._valueChanged}">
@@ -83,7 +75,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           <div class="input">
             <label>24h</label>
             <ha-switch
-              class="${this._config!.meridiem === undefined ? 'default' : ''} slotted"
+              class="${this.classesForItem(this._config!.meridiem, true)} slotted"
               id="meridiem"
               .configValue="${'[meridiem]'}"
               ?checked="${this.config.meridiem === true}"
@@ -97,6 +89,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           <div class="side-by-side">
             <paper-dropdown-menu
               label="Time *"
+              id="time"
+              class="${this.classesForItem(this._config!.entities?.time, true, true)}"
               @value-changed=${this._valueChanged}
               .configValue="${'entities[time]'}"
             >
@@ -106,6 +100,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           <div class="side-by-side">
             <paper-dropdown-menu
               label="Elevation *"
+              id="elevation"
+              class="${this.classesForItem(this._config!.entities?.elevation, true, true)}"
               @value-changed=${this._valueChanged}
               .configValue="${'entities[elevation]'}"
             >
@@ -190,11 +186,11 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     return entities.sort();
   }
 
-  private _valueChanged(ev) {
+  private _valueChanged(ev: Event) {
     if (!this._config || !this._hass) {
       return;
     }
-    const { target } = ev;
+    const { target }: any = ev;
     if (target.configValue) {
       const [,
         objName,
@@ -223,6 +219,15 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     fireEvent(this, 'config-changed', { config: this._config });
   }
 
+  private classesForItem(configValue: any, hasDefault?: boolean, required?: boolean): string {
+    const isDefault = hasDefault && configValue === undefined;
+    const classes = [
+      isDefault ? 'default' : '',
+      required && (hasDefault && !isDefault) || configValue === '' ? 'error' : '',
+    ];
+    return classes.join(' ').trim();
+  }
+
   static get styles(): CSSResult {
     return css`
       .side-by-side {
@@ -246,11 +251,14 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         margin: auto 0;
         padding-right: 24px;
       }
+      #name.default, #time.default, #elevation.default {
+        --paper-input-container-input-color: var(--disabled-text-color);
+      }
       #meridiem.default {
-        --switch-checked-track-color:  var(--disabled-text-color);
-        --switch-checked-button-color:  var(--disabled-text-color);
-        --switch-unchecked-track-color:  var(--disabled-text-color);
-        --switch-unchecked-button-color:  var(--disabled-text-color);
+        --switch-checked-track-color: var(--disabled-text-color);
+        --switch-checked-button-color: var(--disabled-text-color);
+        --switch-unchecked-track-color: var(--disabled-text-color);
+        --switch-unchecked-button-color: var(--disabled-text-color);
       }
     `;
   }

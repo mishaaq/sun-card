@@ -10,6 +10,7 @@ import {
   IReader,
   SunCardConfig,
   EntityMutator,
+  SunCardConfigEntities,
 } from './types';
 
 import { createCurrentTime } from './providers/time';
@@ -20,7 +21,7 @@ import {
   createSunrise,
   createSunset,
 } from './providers/sun';
-import { createMoonPhase, createMoonIcon } from './providers/moon';
+import { createMoonPhase } from './providers/moon';
 
 /* TODO: add validations */
 class DataProvider implements ISun, IMoon, ITime {
@@ -30,8 +31,7 @@ class DataProvider implements ISun, IMoon, ITime {
   private _solar_noon: IReader<moment.Moment>;
   private _sunrise: IReader<moment.Moment>;
   private _sunset: IReader<moment.Moment>;
-  private _moonPhase: IReader<string>;
-  private _moonIcon: IReader<string>;
+  private _moon_phase: IReader<string>;
 
   get current_time(): moment.Moment {
     return this._currentTime.read();
@@ -50,11 +50,19 @@ class DataProvider implements ISun, IMoon, ITime {
   }
 
   get sunrise(): moment.Moment {
-    return this._sunrise.read();
+    let sunrise = this._sunrise.read();
+    if (this.current_time.day() !== sunrise.day()) {
+      sunrise = moment.invalid();
+    }
+    return sunrise;
   }
 
   get sunset(): moment.Moment {
-    return this._sunset.read();
+    let sunset = this._sunset.read();
+    if (this.current_time.day() !== sunset.day()) {
+      sunset = moment.invalid();
+    }
+    return sunset;
   }
 
   get daylight(): moment.Duration {
@@ -66,11 +74,7 @@ class DataProvider implements ISun, IMoon, ITime {
   }
 
   get moon_phase(): string {
-    return this._moonPhase.read();
-  }
-
-  get moon_icon(): string {
-    return this._moonIcon.read();
+    return this._moon_phase.read();
   }
 
   constructor(
@@ -81,7 +85,6 @@ class DataProvider implements ISun, IMoon, ITime {
     sunrise: IReader<moment.Moment>,
     sunset: IReader<moment.Moment>,
     moonPhase: IReader<string>,
-    moonIcon: IReader<string>,
   ) {
     this._currentTime = currentTime;
     this._elevation = elevation;
@@ -89,8 +92,7 @@ class DataProvider implements ISun, IMoon, ITime {
     this._solar_noon = solarNoon;
     this._sunrise = sunrise;
     this._sunset = sunset;
-    this._moonPhase = moonPhase;
-    this._moonIcon = moonIcon;
+    this._moon_phase = moonPhase;
   }
 }
 
@@ -116,6 +118,8 @@ class EntitiesDirectory {
 
 export class Factory {
   static create(entities: HassEntities, config: SunCardConfig): [DataProvider, EntityMutator] {
+    this.validatePresence(config.entities, entities);
+
     const directory: EntitiesDirectory = new EntitiesDirectory();
 
     const [
@@ -153,12 +157,7 @@ export class Factory {
     const [
       moonPhase,
       moonPhaseUpdater,
-    ] = createMoonPhase(this.getEntity(entities, config.entities.moon));
-
-    const [
-      moonIcon,
-      moonIconUpdater,
-    ] = createMoonIcon(this.getEntity(entities, config.entities.moon));
+    ] = createMoonPhase(this.getEntity(entities, config.entities.moon_phase));
 
     directory.add(config.entities.time, currentTimeUpdater);
     directory.add(config.entities.elevation, elevationUpdater);
@@ -166,18 +165,24 @@ export class Factory {
     directory.add(config.entities.noon, noonUpdater);
     directory.add(config.entities.sunrise, sunriseUpdater);
     directory.add(config.entities.sunset, sunsetUpdater);
-    directory.add(config.entities.moon, moonPhaseUpdater);
-    directory.add(config.entities.moon, moonIconUpdater);
+    directory.add(config.entities.moon_phase, moonPhaseUpdater);
 
     const provider = new DataProvider(
-      currentTime, elevation, maxElevation, noon, sunrise, sunset, moonPhase, moonIcon,
+      currentTime, elevation, maxElevation, noon, sunrise, sunset, moonPhase,
     );
 
     return [provider, directory.create()];
   }
 
   private static getEntity(entities: HassEntities, entityName: string | undefined): HassEntity | undefined {
-    /* Add error handling for unavailable entities */
     return entityName ? entities[entityName] : undefined;
+  }
+
+  private static validatePresence(config: SunCardConfigEntities, entities: HassEntities) {
+    Object.entries(config).find(([key, name]) => {
+      if (!Object.hasOwnProperty.call(entities, name)) {
+        throw new Error(`Entity ${name} set for config entry "${key}" not found.`);
+      }
+    });
   }
 }

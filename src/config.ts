@@ -7,10 +7,10 @@ export default {
   entities: {
     time: 'sensor.time_utc',
     elevation: 'sun.sun',
-    max_elevation: 'sensor.max_elevation',
-    sunrise: 'sensor.sunrise',
-    sunset: 'sensor.sunset',
+    max_elevation: 'sun.sun',
+    sunrise: 'sun.sun',
+    sunset: 'sun.sun',
     noon: 'sensor.solar_noon',
-    moon: 'sensor.moon',
+    moon_phase: 'sensor.moon',
   },
 } as SunCardConfig;

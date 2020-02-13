@@ -60,6 +60,8 @@ class SunCard extends LitElement {
 
   private _provider?: ISun & IMoon & ITime;
 
+  private _error?: Error;
+
   readonly svgViewBoxW: number = 24 * 60; // 24h * 60 minutes - viewBox width in local points
 
   readonly svgViewBoxH: number = 432; // viewBox height in local points
@@ -79,7 +81,7 @@ class SunCard extends LitElement {
   get config(): SunCardConfig {
     const entitiesConfig = {
       ...defaultConfig.entities,
-      ...this._config ? this._config.entities : null,
+      ...this._config?.entities,
     };
     return {
       ...defaultConfig,
@@ -120,17 +122,22 @@ class SunCard extends LitElement {
   }
 
   protected update(changedProps: PropertyValues) {
-    if (changedProps.has('_config')) {
-      [this._provider, updateFunc] = Factory.create(this.hass!.states, this.config);
-    }
-    const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
-    if (oldHass) {
-      Object.values(this.config!.entities).forEach((entityName) => {
-        if (oldHass.states[entityName] !== this.hass!.states[entityName]) updateFunc!(this.hass!.states[entityName]);
-      });
-    }
+    try {
+      if (changedProps.has('_config')) {
+        this._error = undefined;
+        [this._provider, updateFunc] = Factory.create(this.hass!.states, this.config);
+      }
 
-    super.update(changedProps);
+      const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
+      if (oldHass && this._provider) {
+        Object.values(this.config!.entities).forEach((entityName) => {
+          if (oldHass.states[entityName] !== this.hass!.states[entityName]) updateFunc!(this.hass!.states[entityName]);
+        });
+      }
+    } catch (e) {
+      this._error = e;
+    }
+    return super.update(changedProps);
   }
 
   public getCardSize(): number {
@@ -138,6 +145,14 @@ class SunCard extends LitElement {
   }
 
   protected render(): TemplateResult | void {
+    if (this._error) {
+      return html`
+        <hui-warning>
+          ${this._error.message}
+        </hui-warning>
+      `
+    }
+
     if (!this._config || !this.hass || !this._provider) {
       return html``;
     }
@@ -218,7 +233,7 @@ class SunCard extends LitElement {
         return html``;
       }
       return html`
-        <ha-icon icon=${moonEntity.moon_icon}></ha-icon>
+        <ha-icon icon=${this.moonIcon(moonEntity.moon_phase)}></ha-icon>
       `;
     };
 
@@ -256,6 +271,10 @@ class SunCard extends LitElement {
       x: time.hour() * 60 + time.minute(),
       y: -elevation * this.yScale,
     };
+  }
+
+  private moonIcon(phase: string): string {
+    return `mdi:moon-${phase.replace('_', '-')}`;
   }
 
   static get styles(): CSSResult {

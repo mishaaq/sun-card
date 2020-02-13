@@ -1,7 +1,7 @@
 import moment from 'moment';
 import 'moment/min/locales';
 
-import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
+import { HassEntity } from 'home-assistant-js-websocket';
 
 export interface SunCardConfigEntities {
   time: string;
@@ -10,7 +10,7 @@ export interface SunCardConfigEntities {
   sunrise?: string;
   sunset?: string;
   noon?: string;
-  moon?: string;
+  moon_phase?: string;
 }
 
 export interface SunCardConfig {
@@ -31,7 +31,6 @@ export interface ITime {
 
 export interface IMoon {
   moon_phase: string;
-  moon_icon: string;
 }
 
 export interface ISun {

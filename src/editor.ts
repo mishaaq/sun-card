@@ -32,7 +32,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
 
   private _defaultMeridiem?: boolean;
 
-  public setConfig(config) : void {
+  public setConfig(config: SunCardConfig) : void {
     this._config = config;
     this.requestUpdate();
   }
@@ -40,7 +40,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
   get config(): SunCardConfig {
     const entitiesConfig = {
       ...defaultConfig.entities,
-      ...this._config ? this._config.entities : null,
+      ...this._config?.entities,
     };
     return {
       ...defaultConfig,
@@ -50,7 +50,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     };
   }
 
-  set hass(hass) {
+  set hass(hass: HomeAssistant | undefined) {
     this._hass = hass;
     if (hass) {
       this._defaultMeridiem = moment.localeData(hass.language)
@@ -92,21 +92,31 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
             </ha-switch>
           </div>
         </div>
+        <h4>Entities:</h4>
         <div>
           <div class="side-by-side">
             <paper-dropdown-menu
-              label="Time"
+              label="Time *"
               @value-changed=${this._valueChanged}
               .configValue="${'entities[time]'}"
             >
               ${this._entityDropdown('time', ['sensor'])}
             </paper-dropdown-menu>
+          </div>
+          <div class="side-by-side">
             <paper-dropdown-menu
-              label="Elevation"
+              label="Elevation *"
               @value-changed=${this._valueChanged}
               .configValue="${'entities[elevation]'}"
             >
               ${this._entityDropdown('elevation', ['sensor', 'sun'])}
+            </paper-dropdown-menu>
+            <paper-dropdown-menu
+              label="Max elevation"
+              @value-changed=${this._valueChanged}
+              .configValue="${'entities[max_elevation]'}"
+            >
+              ${this._entityDropdown('max_elevation', ['sensor', 'sun'])}
             </paper-dropdown-menu>
           </div>
           <div class="side-by-side">
@@ -136,9 +146,9 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
             <paper-dropdown-menu
               label="Moon"
               @value-changed=${this._valueChanged}
-              .configValue="${'entities[moon]'}"
+              .configValue="${'entities[moon_phase]'}"
             >
-              ${this._entityDropdown('moon', ['sensor'])}
+              ${this._entityDropdown('moon_phase', ['sensor'])}
             </paper-dropdown-menu>
           </div>
         </div>
@@ -189,7 +199,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
       const [,
         objName,
         propName,
-      ] = target.configValue.match(/^([a-zA-Z][a-zA-Z0-9]+)?(?:\[([a-zA-Z][a-zA-Z0-9]+)\])$/);
+      ] = target.configValue.match(/^([_a-zA-Z][_a-zA-Z0-9]+)?(?:\[([_a-zA-Z][_a-zA-Z0-9]+)\])$/);
 
       const configObj = objName ? (this.config[objName] || {}) : this.config;
       if (configObj[propName] === (target.checked !== undefined ? target.checked : target.value)) {

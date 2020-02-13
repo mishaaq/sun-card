@@ -1,5 +1,6 @@
 extends: airbnb-base
 parser: "@typescript-eslint/parser"
+plugins: ['@typescript-eslint', 'prettier']
 parserOptions:
   ecmaVersion: 2018
   sourceType: 'module'

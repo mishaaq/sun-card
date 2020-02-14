@@ -1,13 +1,19 @@
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
+import replace from '@rollup/plugin-replace';
 import { terser } from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 import sizes from 'rollup-plugin-sizes';
 
+const pkg = require('./package.json');
+
 const dev = process.env.ROLLUP_WATCH;
 
 const commonPlugins = [
+  replace({
+    __VERSION__: pkg.version,
+  }),
   resolve(),
   commonjs({
     include: [

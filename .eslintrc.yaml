@@ -1,7 +1,12 @@
 extends: airbnb-base
 parser: "@typescript-eslint/parser"
+plugins: ['@typescript-eslint', 'prettier']
+parserOptions:
+  ecmaVersion: 2018
+  sourceType: 'module'
 rules:
-  no-param-reassign: 0
+  lines-between-class-members: 0
+  no-param-reassign: ["error", { "props": false }]
   no-else-return: 0
   no-underscore-dangle: 0
   nonblock-statement-body-position: 0

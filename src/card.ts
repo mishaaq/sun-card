@@ -230,9 +230,10 @@ class SunCard extends LitElement {
       `;
     };
 
-    const header = this._config.name
-      || this.hass.states['sun.sun']?.attributes.friendly_name
-      || this.hass.localize('domain.sun');
+    let header = this._config.name;
+    if (header === undefined)
+      header = this.hass.states['sun.sun']?.attributes.friendly_name
+        || this.hass.localize('domain.sun');
     return html`
       <ha-card .header=${header}>
         <div class="content">
@@ -289,6 +290,7 @@ class SunCard extends LitElement {
       }
       .moon-icon {
         position: absolute;
+        top: 5px;
         right: 5px;
         opacity: 0.5;
       }

@@ -179,6 +179,7 @@ export class Factory {
   }
 
   private static validatePresence(config: SunCardConfigEntities, entities: HassEntities) {
+    // eslint-disable-next-line array-callback-return
     Object.entries(config).find(([key, name]) => {
       if (!Object.hasOwnProperty.call(entities, name)) {
         throw new Error(`Entity ${name} set for config entry "${key}" not found. Check your configuration.`);

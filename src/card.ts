@@ -31,7 +31,6 @@ import {
   IMoon,
   ITime,
   EntityMutator,
-  SunCardConfigEntities,
 } from './types';
 
 import './editor';
@@ -268,7 +267,16 @@ class SunCard extends LitElement {
   }
 
   private moonIcon(phase: string): string {
-    return `mdi:moon-${phase.replace('_', '-')}`;
+    const icon: string = {
+      new_moon: 'new',
+      waxing_crescent: 'waxing-crescent',
+      first_quarter: 'first-quarter',
+      waxing_gibbous: 'waxing-gibbous',
+      full_moon: 'full',
+      last_quarter: 'last-quarter',
+      waning_crescent: 'waning-crescent',
+    }[phase];
+    return `mdi:moon-${icon}`;
   }
 
   static get styles(): CSSResult {
@@ -280,10 +288,10 @@ class SunCard extends LitElement {
         padding: 8px;
       }
       .content {
-        background: var(--sc-background, linear-gradient(rgba(242, 249, 254,  0%),
-                                                          rgb(214, 240, 253) 46%,
-                                                          rgb(182, 224,  38) 54%,
-                                                         rgba(171, 220,  40,  0%)));
+        background: var(--sc-background, linear-gradient(hsla(205, 86%, 100%, 0%)   0%,
+                                                         hsla(200, 91%,  90%)      46%,
+                                                         hsla( 74, 75%,  50%)      54%,
+                                                         hsla( 76, 72%,  50%, 0%) 100%));
         display: flex;
         flex-flow: column nowrap;
         position: relative;
@@ -293,6 +301,7 @@ class SunCard extends LitElement {
         top: 5px;
         right: 5px;
         opacity: 0.5;
+        fill: var(--sc-moon-color, currentcolor);
       }
       svg {
         width: 100%;

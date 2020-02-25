@@ -42,9 +42,9 @@ Entities options:
 | time          | sensor.utc_time | string in format hh:mm | current UTC time                                      |
 | elevation     | sun.sun         | number                 | current sun elevation                                 |
 | max_elevation | -               | number                 | maximum elevation today                               |
-| sunrise       | -               | time with timezone     | today's sunrise time                                  |
-| sunset        | -               | time with timezone     | today's sunset time                                   |
-| noon          | -               | time with timezone     | today's noon time                                     |
+| sunrise       | -               | time (string)          | today's sunrise time                                  |
+| sunset        | -               | time (string)          | today's sunset time                                   |
+| noon          | -               | time (string)          | today's noon time                                     |
 | moon          | -               | string                 | moon phase (refer to moon sensor for possible values) |
 
 ## Example

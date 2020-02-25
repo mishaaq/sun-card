@@ -60,6 +60,7 @@ You can simply change default style of the card specifying CSS variables in your
 | --sc-sun-size         | stroke-width  | Sun size in pixels, default to 60px              |
 | --sc-event-line-color | stroke        | Sunrise, noon and sunset timestamp markers color |
 | --sc-horizon-color    | stroke        | Horizon line color                               |
+| --sc-moon-color       | fill          | Moon fill color                                  |
 
 ## Installation
 

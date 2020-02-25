@@ -6,6 +6,8 @@ import {
   IReader, EntityWrapper, convert, ValueProvider,
 } from '../types';
 
+import { utcToLocal, inferred } from './converters';
+
 class InvalidMomentReader implements IReader<moment.Moment> {
   read(): moment.Moment {
     return moment.invalid();
@@ -48,9 +50,7 @@ export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment>
     return [new InvalidMomentReader(), undefined];
   }
 
-  let converter: (val: any) => moment.Moment = (time: any) => {
-    return moment.utc(time).local();
-  };
+  let converter = utcToLocal;
   let attribute: string | undefined;
   if (entity.entity_id === 'sun.sun') {
     attribute = 'sunrise';
@@ -58,7 +58,7 @@ export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment>
       attribute = 'next_rising';
     }
   } else
-    converter = moment.parseZone;
+    converter = inferred;
   const ReaderClass = prepareReader(converter, attribute);
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
@@ -69,9 +69,7 @@ export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> 
     return [new InvalidMomentReader(), undefined];
   }
 
-  let converter: (val: any) => moment.Moment = (time: any) => {
-    return moment.utc(time).local();
-  };
+  let converter = utcToLocal;
   let attribute: string | undefined;
   if (entity.entity_id === 'sun.sun') {
     attribute = 'sunset';
@@ -79,7 +77,7 @@ export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> 
       attribute = 'next_setting';
     }
   } else
-    converter = moment.parseZone;
+    converter = inferred;
   const ReaderClass = prepareReader(converter, attribute);
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
@@ -90,7 +88,7 @@ export const createNoon = (entity?: HassEntity): ValueProvider<moment.Moment> =>
     return [new InvalidMomentReader(), undefined];
   }
 
-  const ReaderClass = prepareReader(moment.parseZone);
+  const ReaderClass = prepareReader(inferred);
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
 };

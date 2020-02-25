@@ -18,7 +18,7 @@ class TimeUTCReader extends EntityWrapper implements IReader<moment.Moment> {
 
 class BrowserTimeReader implements IReader<moment.Moment> {
   read(): moment.Moment {
-    return moment();
+    return moment(new Date());
   }
 }
 

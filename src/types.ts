@@ -94,5 +94,5 @@ export class EntityWrapper {
 
 export type EntityMutator = (entity: HassEntity) => void;
 
-export interface ValueProvider<R> extends Array<IReader<R>|EntityMutator|undefined>
-  {0: IReader<R>, 1: EntityMutator|undefined}
+export interface ValueProvider<R> extends Array<IReader<R>|EntityMutator>
+  {0: IReader<R>, 1: EntityMutator}

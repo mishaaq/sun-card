@@ -51,7 +51,7 @@ class DataProvider implements ISun, IMoon, ITime {
 
   get sunrise(): moment.Moment {
     let sunrise = this._sunrise.read();
-    if (this.current_time.day() !== sunrise.day()) {
+    if (this.current_time.date() !== sunrise.date()) {
       sunrise = moment.invalid();
     }
     return sunrise;
@@ -59,7 +59,7 @@ class DataProvider implements ISun, IMoon, ITime {
 
   get sunset(): moment.Moment {
     let sunset = this._sunset.read();
-    if (this.current_time.day() !== sunset.day()) {
+    if (this.current_time.date() !== sunset.date()) {
       sunset = moment.invalid();
     }
     return sunset;

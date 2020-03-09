@@ -114,9 +114,9 @@ class SunCard extends LitElement {
 
   protected update(changedProps: PropertyValues) {
     try {
-      if (changedProps.has('_config')) {
+      if (changedProps.has('_config') && this.hass?.states) {
         this._error = undefined;
-        [this._provider, updateFunc] = Factory.create(this.hass!.states, this._config!);
+        [this._provider, updateFunc] = Factory.create(this.hass.states, this._config!);
       }
 
       const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
@@ -276,6 +276,7 @@ class SunCard extends LitElement {
       last_quarter: 'last-quarter',
       waning_crescent: 'waning-crescent',
     }[phase];
+    if (!icon) console.error(`Sun Card: Unexpected state value '${phase}' for moon sensor.`);
     return `mdi:moon-${icon}`;
   }
 

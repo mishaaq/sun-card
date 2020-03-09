@@ -24,7 +24,7 @@ class BrowserTimeReader implements IReader<moment.Moment> {
 
 export const createCurrentTime = (entity: HassEntity): ValueProvider<moment.Moment> => {
   if (!TimeUTCReader.accepts(entity)) {
-    return [new BrowserTimeReader(), undefined];
+    return [new BrowserTimeReader(), () => {}];
   }
   const entityReader = new TimeUTCReader(entity);
   return [entityReader, entityReader.mutator()];

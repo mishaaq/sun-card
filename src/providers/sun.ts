@@ -6,7 +6,7 @@ import {
   IReader, EntityWrapper, convert, ValueProvider,
 } from '../types';
 
-import { utcToLocal, inferred } from './converters';
+import { Converter, utcToLocal, inferred } from './converters';
 
 class InvalidMomentReader implements IReader<moment.Moment> {
   read(): moment.Moment {
@@ -38,7 +38,7 @@ export const createMaxElevation = (entity?: HassEntity): ValueProvider<number> =
       read(): number {
         return 90;
       }
-    }(), undefined];
+    }(), () => {}];
   }
   const ReaderClass = prepareReader(parseFloat, entity.entity_id === 'sun.sun' ? 'max_elevation' : undefined);
   const entityReader = new ReaderClass(entity);
@@ -47,10 +47,10 @@ export const createMaxElevation = (entity?: HassEntity): ValueProvider<number> =
 
 export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return [new InvalidMomentReader(), undefined];
+    return [new InvalidMomentReader(), () => {}];
   }
 
-  let converter = utcToLocal;
+  let converter: Converter = utcToLocal;
   let attribute: string | undefined;
   if (entity.entity_id === 'sun.sun') {
     attribute = 'sunrise';
@@ -58,7 +58,7 @@ export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment>
       attribute = 'next_rising';
     }
   } else
-    converter = inferred;
+    converter = inferred(entity);
   const ReaderClass = prepareReader(converter, attribute);
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
@@ -66,7 +66,7 @@ export const createSunrise = (entity?: HassEntity): ValueProvider<moment.Moment>
 
 export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return [new InvalidMomentReader(), undefined];
+    return [new InvalidMomentReader(), () => {}];
   }
 
   let converter = utcToLocal;
@@ -77,7 +77,7 @@ export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> 
       attribute = 'next_setting';
     }
   } else
-    converter = inferred;
+    converter = inferred(entity);
   const ReaderClass = prepareReader(converter, attribute);
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
@@ -85,10 +85,10 @@ export const createSunset = (entity?: HassEntity): ValueProvider<moment.Moment> 
 
 export const createNoon = (entity?: HassEntity): ValueProvider<moment.Moment> => {
   if (!entity) {
-    return [new InvalidMomentReader(), undefined];
+    return [new InvalidMomentReader(), () => {}];
   }
 
-  const ReaderClass = prepareReader(inferred);
+  const ReaderClass = prepareReader(inferred(entity));
   const entityReader = new ReaderClass(entity);
   return [entityReader, entityReader.mutator()];
 };

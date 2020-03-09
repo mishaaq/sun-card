@@ -10,7 +10,7 @@ class EmptyReader implements IReader<string> {
 
 export const createMoonPhase = (entity?: HassEntity): ValueProvider<string> => {
   if (!entity) {
-    return [new EmptyReader(), undefined];
+    return [new EmptyReader(), () => {}];
   }
   const entityReader = new class extends EntityWrapper implements IReader<string> {
     read(): string {

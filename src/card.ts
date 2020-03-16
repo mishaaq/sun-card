@@ -273,6 +273,7 @@ class SunCard extends LitElement {
       first_quarter: 'first-quarter',
       waxing_gibbous: 'waxing-gibbous',
       full_moon: 'full',
+      waning_gibbous: 'waning-gibbous',
       last_quarter: 'last-quarter',
       waning_crescent: 'waning-crescent',
     }[phase];

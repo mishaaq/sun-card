@@ -99,11 +99,10 @@ class DataProvider implements ISun, IMoon, ITime {
 class EntitiesDirectory {
   private _directory: {[entity: string]: EntityMutator[]} = {};
 
-  add(name: string|undefined, mutator: EntityMutator|undefined): EntitiesDirectory {
-    if (!name || !mutator) return this;
-    if (!this._directory[name]) {
-      this._directory[name] = [];
-    }
+  add(name: string|undefined, mutator: EntityMutator): EntitiesDirectory {
+    if (!name) return this;
+
+    this._directory[name] = this._directory[name] || [];
     this._directory[name].push(mutator);
     return this;
   }

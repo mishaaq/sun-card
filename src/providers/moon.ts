@@ -4,7 +4,7 @@ import { IReader, EntityWrapper, ValueProvider } from '../types';
 
 class EmptyReader implements IReader<string> {
   read(): string {
-    return '';
+    return '<not_available>';
   }
 }
 

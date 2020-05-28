@@ -18,6 +18,7 @@ export interface SunCardConfig extends LovelaceCardConfig {
   entities: SunCardConfigEntities;
   name?: string;
   meridiem?: boolean;
+  animation?: boolean;
 }
 
 export type Coords = {

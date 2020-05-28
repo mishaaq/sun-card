@@ -150,7 +150,8 @@ class SunCard extends LitElement {
     }
 
     const sun = this.renderSun(this._provider.current_time, this._provider.elevation);
-    const sunBeam = this.renderSunbeam(this._provider.current_time, this._provider.elevation);
+    const sunBeam = this._config!.animation || this._config!.animation === undefined
+      ? this.renderSunbeam(this._provider.current_time, this._provider.elevation) : null;
 
     const sunrise = this._provider.sunrise ? this.renderSunrise(this._provider.sunrise) : null;
     const sunset = this._provider.sunset ? this.renderSunset(this._provider.sunset) : null;

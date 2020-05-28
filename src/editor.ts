@@ -42,6 +42,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         name: this._hass?.states['sun.sun']?.attributes.friendly_name || this._hass?.localize('domain.sun'),
         meridiem: moment.localeData(this._hass?.language)
           .longDateFormat('LT').toLowerCase().indexOf('a') > -1,
+        animation: true,
       } as SunCardConfig,
       ...this._config,
       ...{ entities: entitiesConfig },
@@ -67,7 +68,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           .configValue="${'[name]'}"
           @value-changed="${this._valueChanged}">
         </paper-input>
-        <div class="side-by-side">
+        <div class="side-by-side control">
           <div class="label">
             <div class="heading">Clock format</div>
             <div class="description">Default set to language specific</div>
@@ -81,6 +82,23 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
               ?checked="${this.config.meridiem === true}"
               @change="${this._valueChanged}">
               12h
+            </ha-switch>
+          </div>
+        </div>
+        <div class="side-by-side control">
+          <div class="label">
+            <div class="heading">Animation</div>
+            <div class="description">Turn on/off animation of sunbeam</div>
+          </div>
+          <div class="input">
+            <label>off</label>
+            <ha-switch
+              class="${this.classesForItem(this._config!.animation, true)} slotted"
+              id="animation"
+              .configValue="${'[animation]'}"
+              ?checked="${this.config.animation === true}"
+              @change="${this._valueChanged}">
+              on
             </ha-switch>
           </div>
         </div>
@@ -243,6 +261,9 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         color: var(--disabled-text-color);
         font-size: var(--paper-font-body1_-_font-size);
       }
+      .control {
+        padding: 8px 0;
+      }
       .input {
         display: flex;
         flex-flow: row nowrap;
@@ -251,10 +272,13 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         margin: auto 0;
         padding-right: 24px;
       }
+      ha-switch {
+        min-width: 80px;
+      }
       #name.default, #time.default, #elevation.default {
         --paper-input-container-input-color: var(--disabled-text-color);
       }
-      #meridiem.default {
+      #meridiem.default, #animation.default {
         --switch-checked-track-color: var(--disabled-text-color);
         --switch-checked-button-color: var(--disabled-text-color);
         --switch-unchecked-track-color: var(--disabled-text-color);

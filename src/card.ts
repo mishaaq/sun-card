@@ -296,12 +296,12 @@ class SunCard extends LitElement {
     `;
   }
 
-  renderMoon(moon_phase: string | undefined): TemplateResult {
-    if (!moon_phase) {
+  renderMoon(moon_phase_icon: string | undefined): TemplateResult {
+    if (!moon_phase_icon) {
       return html``;
     }
     return html`
-      <ha-icon icon=${this.moonIcon(moon_phase)}></ha-icon>
+      <ha-icon icon=${moon_phase_icon}></ha-icon>
     `;
   }
 
@@ -310,21 +310,6 @@ class SunCard extends LitElement {
       x: time.hour() * 60 + time.minute(),
       y: -elevation * this.yScale,
     };
-  }
-
-  private moonIcon(phase: string): string {
-    const icon: string = {
-      new_moon: 'new',
-      waxing_crescent: 'waxing-crescent',
-      first_quarter: 'first-quarter',
-      waxing_gibbous: 'waxing-gibbous',
-      full_moon: 'full',
-      waning_gibbous: 'waning-gibbous',
-      last_quarter: 'last-quarter',
-      waning_crescent: 'waning-crescent',
-    }[phase];
-    if (!icon) console.error(`Sun Card: Unexpected state value '${phase}' for moon sensor.`);
-    return `mdi:moon-${icon}`;
   }
 
   static get styles(): CSSResult {

@@ -17,6 +17,7 @@ rules:
   class-methods-use-this: 0
   no-nested-ternary: 0
   camelcase: 0
+  one-var: 0
   no-unused-vars: 0
   import/no-unresolved: 0
   no-inner-declarations: 0
@@ -26,7 +27,7 @@ rules:
   import/extensions: 0
   new-cap: ["error", { "newIsCap": false }]
   max-len: ["error", {"code": 120, "ignoreUrls": true}]
-  indent: ["error", 2, {"FunctionDeclaration": {"parameters": "first"}, "ArrayExpression": "first"}]
+  indent: ["error", 2, {"FunctionDeclaration": {"parameters": "first"}, "ArrayExpression": "first", "VariableDeclarator": "first"}]
 globals:
   document: true
   window: true

@@ -149,85 +149,17 @@ class SunCard extends LitElement {
       return html``;
     }
 
-    const currentTimeEntity: ITime = this._provider;
-    const sunEntity: ISun = this._provider;
-    const moonEntity: IMoon = this._provider;
+    const sun = this.renderSun(this._provider.current_time, this._provider.elevation);
+    const sunBeam = this.renderSunbeam(this._provider.current_time, this._provider.elevation);
 
-    const renderSun = (): SVGTemplateResult => {
-      const sunPos: Coords = this.metric(currentTimeEntity.current_time, sunEntity.elevation);
-      return svg`
-        <line class="sun" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
-      `;
-    };
-    const renderSunbeam = (): SVGTemplateResult => {
-      const sunPos: Coords = this.metric(currentTimeEntity.current_time, sunEntity.elevation);
-      return svg`
-        <line class="sunbeam" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
-      `;
-    };
+    const sunrise = this._provider.sunrise ? this.renderSunrise(this._provider.sunrise) : null;
+    const sunset = this._provider.sunset ? this.renderSunset(this._provider.sunset) : null;
+    const noon = this._provider.solar_noon ? this.renderNoon(this._provider.solar_noon) : null;
 
-    const timeFormat =
-      this._config!.meridiem === undefined && 'LT' ||
-      this._config!.meridiem === true && 'h:mm A' ||
-      'H:mm';
-    const sunrise: [string, moment.Moment] = [SVG_ICONS.sunrise, sunEntity.sunrise];
-    const noon: [string, moment.Moment] = [SVG_ICONS.noon, sunEntity.solar_noon];
-    const sunset: [string, moment.Moment] = [SVG_ICONS.sunset, sunEntity.sunset];
-    const [renderSunrise,
-           renderNoon,
-           renderSunset] = [sunrise, noon, sunset].map(([svgData, event], index): Function => {
-      return () => {
-        if (!event.isValid()) {
-          return svg``;
-        }
-        const inverter: number = 1 - 2 * (index % 2); // returns [1, -1, 1, -1, ...]
-        const eventPos: Coords = this.metric(event, 0);
-        return svg`
-          <line class="event-line" x1="${eventPos.x}" y1="0" x2="${eventPos.x}" y2="${-100 * inverter}"/>
-          <g transform="translate(${eventPos.x - 100},${-125 * inverter - 25})">
-            <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
-              <path d="${svgData}"></path>
-              <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
-                ${event.format(timeFormat)}
-              </text>
-            </svg>
-          </g>
-        `;
-      };
-    });
+    const moonPhase = this._provider.moon_phase ? this.renderMoon(this._provider.moon_phase) : null;
 
-    const renderTimeToSunset = (): TemplateResult => {
-      if (!sunEntity.to_sunset.isValid()) {
-        return html``;
-      }
-      return html`
-        <div>
-          <ha-icon slot="item-icon" icon="mdi:weather-sunset-down"></ha-icon>
-          <span class="item-text">: ${sunEntity.to_sunset.humanize(true)}</span>
-        </div>
-      `;
-    };
-
-    const renderDaylight = (): TemplateResult => {
-      if (!sunEntity.daylight.isValid()) {
-        return html``;
-      }
-      return html`
-        <div>
-          <ha-icon slot="item-icon" icon="mdi:weather-sunny"></ha-icon>
-          <span class="item-text">: ${this.humanizer.humanize(sunEntity.daylight.asMilliseconds())}</span>
-        </div>
-      `;
-    };
-
-    const renderMoon = (): TemplateResult => {
-      if (!moonEntity) {
-        return html``;
-      }
-      return html`
-        <ha-icon icon=${this.moonIcon(moonEntity.moon_phase)}></ha-icon>
-      `;
-    };
+    const timeToSunset = this._provider.to_sunset ? this.renderTimeToSunset(this._provider.to_sunset) : null;
+    const daylight = this._provider.daylight ? this.renderDaylight(this._provider.daylight) : null;
 
     let header = this._config.name;
     if (header === undefined)
@@ -237,25 +169,138 @@ class SunCard extends LitElement {
       <ha-card .header=${header}>
         <div class="content">
           <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            ${renderSunrise()}
-            ${renderSunset()}
-            ${renderSunbeam()}
-            ${renderSun()}
+            ${sunrise}
+            ${sunset}
+            ${sunBeam}
+            ${sun}
           </svg>
           <svg class="bottom" preserveAspectRatio="xMinYMax slice" viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
             <line x1="0" y1="0" x2="${this.svgViewBoxW}" y2="0" class="horizon" />
-            ${renderNoon()}
-            ${renderSun()}
+            ${noon}
+            ${sun}
           </svg>
           <div class="moon-icon">
-            ${renderMoon()}
+            ${moonPhase}
           </div>
         </div>
         <div class="info">
-          ${renderTimeToSunset()}
-          ${renderDaylight()}
+          ${timeToSunset}
+          ${daylight}
         </div>
       </ha-card>
+    `;
+  }
+
+  private renderSun(current_time: moment.Moment, elevation: number): SVGTemplateResult {
+    const sunPos: Coords = this.metric(current_time, elevation);
+    return svg`
+      <line class="sun" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
+    `;
+  }
+
+  renderSunbeam(current_time: moment.Moment, elevation: number): SVGTemplateResult {
+    const sunPos: Coords = this.metric(current_time, elevation);
+    return svg`
+      <line class="sunbeam" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
+    `;
+  }
+
+  renderSunrise(sunrise: moment.Moment): SVGTemplateResult {
+    if (!sunrise.isValid()) {
+      return svg``;
+    }
+    const timeFormat =
+      this._config!.meridiem === undefined && 'LT' ||
+      this._config!.meridiem === true && 'h:mm A' ||
+      'H:mm';
+    const eventPos: Coords = this.metric(sunrise, 100);
+    return svg`
+      <line class="event-line" x1="${eventPos.x}" y1="0" x2="${eventPos.x}" y2="-100"/>
+      <g transform="translate(${eventPos.x - 100},-150)">
+        <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
+          <path d="${SVG_ICONS.sunrise}"></path>
+          <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
+            ${sunrise.format(timeFormat)}
+          </text>
+        </svg>
+      </g>
+    `;
+  }
+
+  renderNoon(noon: moment.Moment): SVGTemplateResult {
+    if (!noon.isValid()) {
+      return svg``;
+    }
+    const timeFormat =
+      this._config!.meridiem === undefined && 'LT' ||
+      this._config!.meridiem === true && 'h:mm A' ||
+      'H:mm';
+    const eventPos: Coords = this.metric(noon, 0);
+    return svg`
+      <line class="event-line" x1="${eventPos.x}" y1="0" x2="${eventPos.x}" y2="100"/>
+      <g transform="translate(${eventPos.x - 100},100)">
+        <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
+          <path d="${SVG_ICONS.noon}"></path>
+          <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
+            ${noon.format(timeFormat)}
+          </text>
+        </svg>
+      </g>
+    `;
+  }
+
+  renderSunset(sunset: moment.Moment): SVGTemplateResult {
+    if (!sunset.isValid()) {
+      return svg``;
+    }
+    const timeFormat =
+      this._config!.meridiem === undefined && 'LT' ||
+      this._config!.meridiem === true && 'h:mm A' ||
+      'H:mm';
+    const eventPos: Coords = this.metric(sunset, 100);
+    return svg`
+      <line class="event-line" x1="${eventPos.x}" y1="0" x2="${eventPos.x}" y2="-100"/>
+      <g transform="translate(${eventPos.x - 100},-150)">
+        <svg viewBox="0 0 150 25" preserveAspectRatio="xMinYMin slice" width="300" height="50">
+          <path d="${SVG_ICONS.sunset}"></path>
+          <text class="event-time" dominant-baseline="middle" x="25" y="12.5">
+            ${sunset.format(timeFormat)}
+          </text>
+        </svg>
+      </g>
+    `;
+  }
+
+  renderTimeToSunset(to_sunset: moment.Duration): TemplateResult {
+    if (!to_sunset.isValid()) {
+      return html``;
+    }
+    return html`
+      <div>
+        <ha-icon slot="item-icon" icon="mdi:weather-sunset-down"></ha-icon>
+        <span class="item-text">: ${to_sunset.humanize(true)}</span>
+      </div>
+    `;
+  }
+
+  renderDaylight(daylight: moment.Duration): TemplateResult {
+    if (!daylight.isValid()) {
+      return html``;
+    }
+    return html`
+      <div>
+        <ha-icon slot="item-icon" icon="mdi:weather-sunny"></ha-icon>
+        <span class="item-text">: ${this.humanizer.humanize(daylight.asMilliseconds())}</span>
+      </div>
+    `;
+  }
+
+  renderMoon(moon_phase: string | undefined): TemplateResult {
+    if (!moon_phase) {
+      return html``;
+    }
+    return html`
+      <ha-icon icon=${this.moonIcon(moon_phase)}></ha-icon>
     `;
   }
 

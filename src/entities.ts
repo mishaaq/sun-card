@@ -1,7 +1,7 @@
 import moment from 'moment';
 import 'moment/min/locales';
 
-import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
+import { HassEntities, HassEntity, getConfig } from 'home-assistant-js-websocket';
 
 import {
   ITime,
@@ -28,10 +28,10 @@ class DataProvider implements ISun, IMoon, ITime {
   private _currentTime: IReader<moment.Moment>;
   private _elevation: IReader<number>;
   private _max_elevation: IReader<number>;
-  private _solar_noon: IReader<moment.Moment>;
-  private _sunrise: IReader<moment.Moment>;
-  private _sunset: IReader<moment.Moment>;
-  private _moon_phase: IReader<string>;
+  private _solar_noon?: IReader<moment.Moment>;
+  private _sunrise?: IReader<moment.Moment>;
+  private _sunset?: IReader<moment.Moment>;
+  private _moon_phase?: IReader<string>;
 
   get current_time(): moment.Moment {
     return this._currentTime.read();
@@ -45,11 +45,13 @@ class DataProvider implements ISun, IMoon, ITime {
     return this._max_elevation.read();
   }
 
-  get solar_noon(): moment.Moment {
-    return this._solar_noon.read();
+  get solar_noon(): moment.Moment | undefined {
+    return this._solar_noon?.read();
   }
 
-  get sunrise(): moment.Moment {
+  get sunrise(): moment.Moment | undefined {
+    if (!this._sunrise) return undefined;
+
     let sunrise = this._sunrise.read();
     if (this.current_time.date() !== sunrise.date()) {
       sunrise = moment.invalid();
@@ -57,7 +59,9 @@ class DataProvider implements ISun, IMoon, ITime {
     return sunrise;
   }
 
-  get sunset(): moment.Moment {
+  get sunset(): moment.Moment | undefined {
+    if (!this._sunset) return undefined;
+
     let sunset = this._sunset.read();
     if (this.current_time.date() !== sunset.date()) {
       sunset = moment.invalid();
@@ -65,26 +69,30 @@ class DataProvider implements ISun, IMoon, ITime {
     return sunset;
   }
 
-  get daylight(): moment.Duration {
-    return moment.duration(this.sunset.diff(this.sunrise));
+  get daylight(): moment.Duration | undefined {
+    if (this.sunrise && this.sunset)
+      return moment.duration(this.sunset.diff(this.sunrise));
+    return undefined;
   }
 
-  get to_sunset(): moment.Duration {
-    return moment.duration(this.sunset.diff(this.current_time));
+  get to_sunset(): moment.Duration | undefined {
+    if (this.sunset)
+      return moment.duration(this.sunset.diff(this.current_time));
+    return undefined;
   }
 
-  get moon_phase(): string {
-    return this._moon_phase.read();
+  get moon_phase(): string | undefined {
+    return this._moon_phase?.read();
   }
 
   constructor(
     currentTime: IReader<moment.Moment>,
     elevation: IReader<number>,
     maxElevation: IReader<number>,
-    solarNoon: IReader<moment.Moment>,
-    sunrise: IReader<moment.Moment>,
-    sunset: IReader<moment.Moment>,
-    moonPhase: IReader<string>,
+    solarNoon?: IReader<moment.Moment>,
+    sunrise?: IReader<moment.Moment>,
+    sunset?: IReader<moment.Moment>,
+    moonPhase?: IReader<string>,
   ) {
     this._currentTime = currentTime;
     this._elevation = elevation;
@@ -125,46 +133,61 @@ export class Factory {
       currentTime,
       currentTimeUpdater,
     ] = createCurrentTime(entities[config.entities.time]);
+    directory.add(config.entities.time, currentTimeUpdater);
 
     const [
       elevation,
       elevationUpdater,
     ] = createElevation(entities[config.entities.elevation]);
+    directory.add(config.entities.elevation, elevationUpdater);
 
     const [
       maxElevation,
       maxElevationUpdater,
     ] = createMaxElevation(
-      this.getEntity(entities, config.entities.max_elevation),
+      config.entities.max_elevation ? entities[config.entities.max_elevation] : undefined,
     );
-
-    const [
-      noon,
-      noonUpdater,
-    ] = createNoon(this.getEntity(entities, config.entities.noon));
-
-    const [
-      sunrise,
-      sunriseUpdater,
-    ] = createSunrise(this.getEntity(entities, config.entities.sunrise));
-
-    const [
-      sunset,
-      sunsetUpdater,
-    ] = createSunset(this.getEntity(entities, config.entities.sunset));
-
-    const [
-      moonPhase,
-      moonPhaseUpdater,
-    ] = createMoonPhase(this.getEntity(entities, config.entities.moon_phase));
-
-    directory.add(config.entities.time, currentTimeUpdater);
-    directory.add(config.entities.elevation, elevationUpdater);
     directory.add(config.entities.max_elevation, maxElevationUpdater);
-    directory.add(config.entities.noon, noonUpdater);
-    directory.add(config.entities.sunrise, sunriseUpdater);
-    directory.add(config.entities.sunset, sunsetUpdater);
-    directory.add(config.entities.moon_phase, moonPhaseUpdater);
+
+    let noon: IReader<moment.Moment> | undefined,
+        noonUpdater: EntityMutator;
+    if (config.entities.noon) {
+      [
+        noon,
+        noonUpdater,
+      ] = createNoon(entities[config.entities.noon]);
+      directory.add(config.entities.noon, noonUpdater);
+    }
+
+    let sunrise: IReader<moment.Moment> | undefined,
+        sunriseUpdater: EntityMutator;
+    if (config.entities.sunrise) {
+      [
+        sunrise,
+        sunriseUpdater,
+      ] = createSunrise(entities[config.entities.sunrise]);
+      directory.add(config.entities.sunrise, sunriseUpdater);
+    }
+
+    let sunset: IReader<moment.Moment> | undefined,
+        sunsetUpdater: EntityMutator;
+    if (config.entities.sunset) {
+      [
+        sunset,
+        sunsetUpdater,
+      ] = createSunset(entities[config.entities.sunset]);
+      directory.add(config.entities.sunset, sunsetUpdater);
+    }
+
+    let moonPhase: IReader<string> | undefined,
+        moonPhaseUpdater: EntityMutator;
+    if (config.entities.moon_phase) {
+      [
+        moonPhase,
+        moonPhaseUpdater,
+      ] = createMoonPhase(entities[config.entities.moon_phase]);
+      directory.add(config.entities.moon_phase, moonPhaseUpdater);
+    }
 
     const provider = new DataProvider(
       currentTime, elevation, maxElevation, noon, sunrise, sunset, moonPhase,
@@ -178,10 +201,9 @@ export class Factory {
   }
 
   private static validatePresence(config: SunCardConfigEntities, entities: HassEntities) {
-    // eslint-disable-next-line array-callback-return
-    Object.entries(config).find(([key, name]) => {
+    Object.entries(config).forEach(([entry, name]) => {
       if (!Object.hasOwnProperty.call(entities, name)) {
-        throw new Error(`Entity ${name} set for config entry "${key}" not found. Check your configuration.`);
+        throw new Error(`Entity ${name} set for config entry "${entry}" not found. Check your configuration.`);
       }
     });
   }

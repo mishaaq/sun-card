@@ -30,7 +30,7 @@ export interface ITime {
 }
 
 export interface IMoon {
-  moon_phase: string;
+  moon_phase: string | undefined;
 }
 
 export interface ISun {
@@ -41,19 +41,19 @@ export interface ISun {
   max_elevation: number;
 
   // get time of Sun's max elevation
-  solar_noon: moment.Moment;
+  solar_noon: moment.Moment | undefined;
 
   // get time of sunrise in local time zone
-  sunrise: moment.Moment;
+  sunrise: moment.Moment | undefined;
 
   // get time of sunset in local time zone
-  sunset: moment.Moment;
+  sunset: moment.Moment | undefined;
 
   // get duration of daylight (from sunrise to sunset)
-  daylight: moment.Duration;
+  daylight: moment.Duration | undefined;
 
   // get time to sunset
-  to_sunset: moment.Duration;
+  to_sunset: moment.Duration | undefined;
 }
 
 export interface IReader<T> {

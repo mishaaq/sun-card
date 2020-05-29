@@ -91,7 +91,7 @@ class SunCard extends LitElement {
       moment.locale(hass.language);
       moment.tz.setDefault(hass.config.time_zone);
       this.humanizer.setOptions({
-        language: hass.language,
+        language: hass.language.split('-')[0],
         delimiter: ' ',
         units: ['h', 'm'],
         round: true,

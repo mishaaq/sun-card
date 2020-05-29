@@ -45,7 +45,7 @@ Entities options:
 | sunrise       | -               | time with timezone     | today's sunrise time                                  |
 | sunset        | -               | time with timezone     | today's sunset time                                   |
 | noon          | -               | time with timezone     | today's noon time                                     |
-| moon          | -               | string                 | moon phase (refer to moon sensor for possible values) |
+| moon_phase    | -               | string                 | moon phase (refer to moon sensor for possible values) |
 
 ## Themes
 
@@ -110,7 +110,7 @@ resources:
     sunrise: sensor.sunrise
     sunset: sensor.sunset
     noon: sensor.solar_noon
-    moon: sensor.moon
+    moon_phase: sensor.moon
 ```
 
 <img src="https://raw.githubusercontent.com/mishaaq/sun-card/master/images/showcase.png" width="450px"/>

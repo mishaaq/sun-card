@@ -1,0 +1,39 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "env": {
+    "browser": true
+  },
+  "extends": ["airbnb-typescript/base", "plugin:prettier/recommended"],
+  "ignorePatterns": ["node_modules", "dist"],
+  "rules": {
+    "no-console": "error",
+    "no-alert": "error",
+    "eqeqeq": ["error", "always"],
+    "prefer-arrow-callback": "off",
+    "consistent-return": "off",
+    "prefer-destructuring": "off",
+    "no-param-reassign": "off",
+    "no-underscore-dangle": ["error", { "allowAfterThis": true }],
+    "class-methods-use-this": ["error", { "exceptMethods": ["getCardSize", "read"] }],
+    "max-classes-per-file": "off",
+
+    "import/extensions": [
+      "error",
+      "always",
+      {
+        "js": "never",
+        "ts": "never"
+      }
+    ],
+    "import/order": ["error", { "newlines-between": "always" }],
+
+    "@typescript-eslint/ban-types": "error",
+    "@typescript-eslint/array-type": "error",
+
+    "prettier/prettier": "error",
+    // Disable rules that conflict with prettier
+    "@typescript-eslint/indent": "off"
+  }
+}

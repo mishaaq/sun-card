@@ -1,7 +1,6 @@
 import moment from 'moment';
 import 'moment/min/locales';
-
-import { HassEntities, HassEntity, getConfig } from 'home-assistant-js-websocket';
+import { HassEntities, HassEntity } from 'home-assistant-js-websocket';
 
 import {
   ITime,
@@ -10,30 +9,35 @@ import {
   IReader,
   SunCardConfig,
   EntityMutator,
-  SunCardConfigEntities,
+  SunCardConfigEntities
 } from './types';
-
-import { createCurrentTime } from './providers/time';
+import createCurrentTime from './providers/time';
 import {
   createElevation,
   createMaxElevation,
   createNoon,
   createSunrise,
-  createSunset,
+  createSunset
 } from './providers/sun';
-import { createMoonPhase } from './providers/moon';
+import createMoonPhase from './providers/moon';
 
 /* TODO: add validations */
 class DataProvider implements ISun, IMoon, ITime {
   private _currentTime: IReader<moment.Moment>;
+
   private _elevation: IReader<number>;
+
   private _max_elevation: IReader<number>;
+
   private _solar_noon?: IReader<moment.Moment>;
+
   private _sunrise?: IReader<moment.Moment>;
+
   private _sunset?: IReader<moment.Moment>;
+
   private _moon_phase?: IReader<string>;
 
-  get current_time(): moment.Moment {
+  get currentTime(): moment.Moment {
     return this._currentTime.read();
   }
 
@@ -41,11 +45,11 @@ class DataProvider implements ISun, IMoon, ITime {
     return this._elevation.read();
   }
 
-  get max_elevation(): number {
+  get maxElevation(): number {
     return this._max_elevation.read();
   }
 
-  get solar_noon(): moment.Moment | undefined {
+  get solarNoon(): moment.Moment | undefined {
     return this._solar_noon?.read();
   }
 
@@ -53,7 +57,7 @@ class DataProvider implements ISun, IMoon, ITime {
     if (!this._sunrise) return undefined;
 
     let sunrise = this._sunrise.read();
-    if (this.current_time.date() !== sunrise.date()) {
+    if (this.currentTime.date() !== sunrise.date()) {
       sunrise = moment.invalid();
     }
     return sunrise;
@@ -63,25 +67,23 @@ class DataProvider implements ISun, IMoon, ITime {
     if (!this._sunset) return undefined;
 
     let sunset = this._sunset.read();
-    if (this.current_time.date() !== sunset.date()) {
+    if (this.currentTime.date() !== sunset.date()) {
       sunset = moment.invalid();
     }
     return sunset;
   }
 
   get daylight(): moment.Duration | undefined {
-    if (this.sunrise && this.sunset)
-      return moment.duration(this.sunset.diff(this.sunrise));
+    if (this.sunrise && this.sunset) return moment.duration(this.sunset.diff(this.sunrise));
     return undefined;
   }
 
-  get to_sunset(): moment.Duration | undefined {
-    if (this.sunset)
-      return moment.duration(this.sunset.diff(this.current_time));
+  get toSunset(): moment.Duration | undefined {
+    if (this.sunset) return moment.duration(this.sunset.diff(this.currentTime));
     return undefined;
   }
 
-  get moon_phase(): string | undefined {
+  get moonPhase(): string | undefined {
     return this._moon_phase?.read();
   }
 
@@ -92,7 +94,7 @@ class DataProvider implements ISun, IMoon, ITime {
     solarNoon?: IReader<moment.Moment>,
     sunrise?: IReader<moment.Moment>,
     sunset?: IReader<moment.Moment>,
-    moonPhase?: IReader<string>,
+    moonPhase?: IReader<string>
   ) {
     this._currentTime = currentTime;
     this._elevation = elevation;
@@ -105,9 +107,9 @@ class DataProvider implements ISun, IMoon, ITime {
 }
 
 class EntitiesDirectory {
-  private _directory: {[entity: string]: EntityMutator[]} = {};
+  private _directory: { [entity: string]: EntityMutator[] } = {};
 
-  add(name: string|undefined, mutator: EntityMutator): EntitiesDirectory {
+  add(name: string | undefined, mutator: EntityMutator): EntitiesDirectory {
     if (!name) return this;
 
     this._directory[name] = this._directory[name] || [];
@@ -123,87 +125,77 @@ class EntitiesDirectory {
   }
 }
 
-export class Factory {
+export default class Factory {
   static create(entities: HassEntities, config: SunCardConfig): [DataProvider, EntityMutator] {
     this.validatePresence(config.entities, entities);
 
     const directory: EntitiesDirectory = new EntitiesDirectory();
 
-    const [
-      currentTime,
-      currentTimeUpdater,
-    ] = createCurrentTime(entities[config.entities.time]);
+    const [currentTime, currentTimeUpdater] = createCurrentTime(entities[config.entities.time]);
     directory.add(config.entities.time, currentTimeUpdater);
 
-    const [
-      elevation,
-      elevationUpdater,
-    ] = createElevation(entities[config.entities.elevation]);
+    const [elevation, elevationUpdater] = createElevation(entities[config.entities.elevation]);
     directory.add(config.entities.elevation, elevationUpdater);
 
-    const [
-      maxElevation,
-      maxElevationUpdater,
-    ] = createMaxElevation(
-      config.entities.max_elevation ? entities[config.entities.max_elevation] : undefined,
+    const [maxElevation, maxElevationUpdater] = createMaxElevation(
+      config.entities.max_elevation ? entities[config.entities.max_elevation] : undefined
     );
     directory.add(config.entities.max_elevation, maxElevationUpdater);
 
-    let noon: IReader<moment.Moment> | undefined,
-        noonUpdater: EntityMutator;
+    let noon: IReader<moment.Moment> | undefined;
+    let noonUpdater: EntityMutator;
     if (config.entities.noon) {
-      [
-        noon,
-        noonUpdater,
-      ] = createNoon(entities[config.entities.noon]);
+      [noon, noonUpdater] = createNoon(entities[config.entities.noon]);
       directory.add(config.entities.noon, noonUpdater);
     }
 
-    let sunrise: IReader<moment.Moment> | undefined,
-        sunriseUpdater: EntityMutator;
+    let sunrise: IReader<moment.Moment> | undefined;
+    let sunriseUpdater: EntityMutator;
     if (config.entities.sunrise) {
-      [
-        sunrise,
-        sunriseUpdater,
-      ] = createSunrise(entities[config.entities.sunrise]);
+      [sunrise, sunriseUpdater] = createSunrise(entities[config.entities.sunrise]);
       directory.add(config.entities.sunrise, sunriseUpdater);
     }
 
-    let sunset: IReader<moment.Moment> | undefined,
-        sunsetUpdater: EntityMutator;
+    let sunset: IReader<moment.Moment> | undefined;
+    let sunsetUpdater: EntityMutator;
     if (config.entities.sunset) {
-      [
-        sunset,
-        sunsetUpdater,
-      ] = createSunset(entities[config.entities.sunset]);
+      [sunset, sunsetUpdater] = createSunset(entities[config.entities.sunset]);
       directory.add(config.entities.sunset, sunsetUpdater);
     }
 
-    let moonPhase: IReader<string> | undefined,
-        moonPhaseUpdater: EntityMutator;
+    let moonPhase: IReader<string> | undefined;
+    let moonPhaseUpdater: EntityMutator;
     if (config.entities.moon_phase) {
-      [
-        moonPhase,
-        moonPhaseUpdater,
-      ] = createMoonPhase(entities[config.entities.moon_phase]);
+      [moonPhase, moonPhaseUpdater] = createMoonPhase(entities[config.entities.moon_phase]);
       directory.add(config.entities.moon_phase, moonPhaseUpdater);
     }
 
     const provider = new DataProvider(
-      currentTime, elevation, maxElevation, noon, sunrise, sunset, moonPhase,
+      currentTime,
+      elevation,
+      maxElevation,
+      noon,
+      sunrise,
+      sunset,
+      moonPhase
     );
 
     return [provider, directory.create()];
   }
 
-  private static getEntity(entities: HassEntities, entityName: string | undefined): HassEntity | undefined {
+  private static getEntity(
+    entities: HassEntities,
+    entityName: string | undefined
+  ): HassEntity | undefined {
     return entityName ? entities[entityName] : undefined;
   }
 
   private static validatePresence(config: SunCardConfigEntities, entities: HassEntities) {
     Object.entries(config).forEach(([entry, name]) => {
       if (!Object.hasOwnProperty.call(entities, name)) {
-        throw new Error(`Entity ${name} set for config entry "${entry}" not found. Check your configuration.`);
+        throw new Error(
+          `Entity ${name} set for config entry "${entry}" not found. Check your configuration.`
+        );
       }
     });
   }

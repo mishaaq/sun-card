@@ -4,11 +4,11 @@ import 'moment/min/locales';
 
 export type Converter = (v: any) => moment.Moment;
 
-export const utcToLocal: Converter = (time) => {
+export const utcToLocal: Converter = time => {
   return moment.utc(time).local();
 };
 
-export const inferred: (entity: HassEntity) => Converter = (entity) => {
+export const inferred: (entity: HassEntity) => Converter = entity => {
   const result = moment(entity.state);
   if (result.isValid()) return (input: string | number) => moment(input);
   // otherwise it's time only

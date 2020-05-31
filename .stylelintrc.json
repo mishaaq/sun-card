@@ -1,0 +1,80 @@
+{
+  "extends": ["stylelint-config-prettier"],
+  "ignoreFiles": ["node_modules/**", "dist/**"],
+  "rules": {
+    "unit-whitelist": ["rem", "em", "%", "ch", "vw", "vh", "s", "deg", "px"],
+    "color-no-invalid-hex": true,
+    "font-family-no-duplicate-names": true,
+    "font-family-no-missing-generic-family-keyword": true,
+    "function-calc-no-invalid": true,
+    "function-calc-no-unspaced-operator": true,
+    "function-linear-gradient-no-nonstandard-direction": true,
+    "string-no-newline": true,
+    "unit-no-unknown": null,
+    "property-no-unknown": true,
+    "keyframe-declaration-no-important": true,
+    "declaration-block-no-duplicate-properties": true,
+    "declaration-block-no-shorthand-property-overrides": true,
+    "block-no-empty": true,
+    "selector-pseudo-class-no-unknown": true,
+    "selector-pseudo-element-no-unknown": true,
+    "selector-type-no-unknown": true,
+    "media-feature-name-no-unknown": true,
+    "comment-no-empty": true,
+    "no-descending-specificity": true,
+    "no-duplicate-at-import-rules": true,
+    "no-duplicate-selectors": true,
+    "no-empty-source": null,
+    "no-extra-semicolons": true,
+    "no-invalid-double-slash-comments": true,
+    "shorthand-property-no-redundant-values": true,
+
+    "declaration-block-single-line-max-declarations": 1,
+    "selector-max-attribute": 2,
+    "selector-max-class": 3,
+    "selector-max-combinators": 5,
+    "selector-max-compound-selectors": 5,
+    "selector-max-pseudo-class": 5,
+    "selector-max-id": 0,
+    "max-nesting-depth": 3,
+    "no-unknown-animations": true,
+
+    "color-hex-case": "lower",
+    "color-hex-length": "long",
+    "function-max-empty-lines": 0,
+    "function-name-case": "lower",
+    "function-whitespace-after": "always",
+    "number-leading-zero": "always",
+    "number-no-trailing-zeros": true,
+    "string-quotes": "single",
+    "length-zero-no-unit": true,
+    "unit-case": "lower",
+
+    "custom-property-empty-line-before": "never",
+
+    "property-case": "lower",
+
+    "declaration-empty-line-before": "never",
+
+    "selector-attribute-operator-space-after": "never",
+    "selector-attribute-operator-space-before": "never",
+    "selector-pseudo-class-case": "lower",
+    "selector-pseudo-element-case": "lower",
+    "selector-pseudo-element-colon-notation": "double",
+    "selector-type-case": "lower",
+
+    "media-feature-name-case": "lower",
+    "media-feature-range-operator-space-after": "always",
+    "media-feature-range-operator-space-before": "always",
+
+    "at-rule-name-case": "lower",
+
+    "comment-empty-line-before": [
+      "always",
+      {
+        "except": ["first-nested"]
+      }
+    ],
+    "comment-whitespace-inside": "always"
+  }
+}

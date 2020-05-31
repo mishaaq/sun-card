@@ -1,6 +1,5 @@
 import moment from 'moment';
 import 'moment/min/locales';
-
 import { HassEntity } from 'home-assistant-js-websocket';
 import { LovelaceCardConfig } from 'custom-card-helpers';
 
@@ -24,14 +23,14 @@ export interface SunCardConfig extends LovelaceCardConfig {
 export type Coords = {
   x: number;
   y: number;
-}
+};
 
 export interface ITime {
-  current_time: moment.Moment;
+  currentTime: moment.Moment;
 }
 
 export interface IMoon {
-  moon_phase: string | undefined;
+  moonPhase: string | undefined;
 }
 
 export interface ISun {
@@ -39,10 +38,10 @@ export interface ISun {
   elevation: number;
 
   // get maximum elevation of sun this day
-  max_elevation: number;
+  maxElevation: number;
 
   // get time of Sun's max elevation
-  solar_noon: moment.Moment | undefined;
+  solarNoon: moment.Moment | undefined;
 
   // get time of sunrise in local time zone
   sunrise: moment.Moment | undefined;
@@ -54,7 +53,7 @@ export interface ISun {
   daylight: moment.Duration | undefined;
 
   // get time to sunset
-  to_sunset: moment.Duration | undefined;
+  toSunset: moment.Duration | undefined;
 }
 
 export interface IReader<T> {
@@ -85,7 +84,9 @@ export class EntityWrapper {
   }
 
   mutator(): EntityMutator {
-    return (entity) => { this._entity = entity; };
+    return entity => {
+      this._entity = entity;
+    };
   }
 
   constructor(entity: HassEntity) {
@@ -95,5 +96,7 @@ export class EntityWrapper {
 
 export type EntityMutator = (entity: HassEntity) => void;
 
-export interface ValueProvider<R> extends Array<IReader<R>|EntityMutator>
-  {0: IReader<R>, 1: EntityMutator}
+export interface ValueProvider<R> extends Array<IReader<R> | EntityMutator> {
+  0: IReader<R>;
+  1: EntityMutator;
+}

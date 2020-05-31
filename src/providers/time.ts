@@ -1,6 +1,5 @@
 import moment from 'moment';
 import 'moment/min/locales';
-
 import { HassEntity } from 'home-assistant-js-websocket';
 
 import { EntityWrapper, IReader, ValueProvider } from '../types';
@@ -22,10 +21,12 @@ class BrowserTimeReader implements IReader<moment.Moment> {
   }
 }
 
-export const createCurrentTime = (entity: HassEntity): ValueProvider<moment.Moment> => {
+const createCurrentTime = (entity: HassEntity): ValueProvider<moment.Moment> => {
   if (!TimeUTCReader.accepts(entity)) {
     return [new BrowserTimeReader(), () => {}];
   }
   const entityReader = new TimeUTCReader(entity);
   return [entityReader, entityReader.mutator()];
 };
+
+export default createCurrentTime;

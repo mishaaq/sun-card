@@ -5,29 +5,22 @@ import {
   property,
   TemplateResult,
   CSSResult,
-  css,
+  css
 } from 'lit-element';
-
 import { HassEntity } from 'home-assistant-js-websocket';
-
-import {
-  HomeAssistant,
-  fireEvent,
-  LovelaceCardEditor,
-} from 'custom-card-helpers';
-
+import { HomeAssistant, fireEvent, LovelaceCardEditor } from 'custom-card-helpers';
 import moment from 'moment';
 import 'moment/min/locales';
 
 import { SunCardConfig } from './types';
 
 @customElement('sun-card-editor')
-export class SunCardEditor extends LitElement implements LovelaceCardEditor {
+export default class SunCardEditor extends LitElement implements LovelaceCardEditor {
   @property() private _hass?: HomeAssistant;
 
   @property() private _config?: SunCardConfig;
 
-  public setConfig(config: SunCardConfig) : void {
+  public setConfig(config: SunCardConfig): void {
     this._config = config;
     this.requestUpdate();
   }
@@ -35,17 +28,20 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
   get config(): SunCardConfig {
     const entitiesConfig = {
       ...{ time: 'sensor.time_utc', elevation: 'sun.sun' },
-      ...this._config?.entities,
+      ...this._config?.entities
     };
     return {
-      ...{
-        name: this._hass?.states['sun.sun']?.attributes.friendly_name || this._hass?.localize('domain.sun'),
-        meridiem: moment.localeData(this._hass?.language)
-          .longDateFormat('LT').toLowerCase().indexOf('a') > -1,
-        animation: true,
-      } as SunCardConfig,
+      ...({
+        name:
+          this._hass?.states['sun.sun']?.attributes.friendly_name ||
+          this._hass?.localize('domain.sun'),
+        meridiem:
+          moment.localeData(this._hass?.language).longDateFormat('LT').toLowerCase().indexOf('a') >
+          -1,
+        animation: true
+      } as SunCardConfig),
       ...this._config,
-      ...{ entities: entitiesConfig },
+      ...{ entities: entitiesConfig }
     };
   }
 
@@ -66,7 +62,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           class="${this.classesForItem(this._config!.name, true)}"
           .value="${this.config.name}"
           .configValue="${'[name]'}"
-          @value-changed="${this._valueChanged}">
+          @value-changed="${this._valueChanged}"
+        >
         </paper-input>
         <div class="side-by-side control">
           <div class="label">
@@ -80,7 +77,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
               id="meridiem"
               .configValue="${'[meridiem]'}"
               ?checked="${this.config.meridiem === true}"
-              @change="${this._valueChanged}">
+              @change="${this._valueChanged}"
+            >
               12h
             </ha-switch>
           </div>
@@ -97,7 +95,8 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
               id="animation"
               .configValue="${'[animation]'}"
               ?checked="${this.config.animation === true}"
-              @change="${this._valueChanged}">
+              @change="${this._valueChanged}"
+            >
               on
             </ha-switch>
           </div>
@@ -170,18 +169,21 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     `;
   }
 
-  private _entityDropdown(configName: string, entityDomains: string[]) : TemplateResult {
+  private _entityDropdown(configName: string, entityDomains: string[]): TemplateResult {
     const entities: string[] = this._getAvailableEntities(entityDomains);
     return html`
       <paper-listbox
-        slot='dropdown-content'
+        slot="dropdown-content"
         .selected="${entities.indexOf(this.config.entities[configName])}"
       >
-        ${entities.map((entityName) => { return this._entityItem(this._hass!.states[entityName]); })}
+        ${entities.map(entityName => {
+          return this._entityItem(this._hass!.states[entityName]);
+        })}
       </paper-listbox>
     `;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   private _entityItem(entity: HassEntity): TemplateResult {
     return html`
       <paper-item value=${entity.entity_id}>
@@ -198,9 +200,10 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     const { states } = this._hass;
 
     let entities: string[] = Object.keys(states);
-    if (ofType) entities = entities.filter((entityId) => {
-      return ofType.includes(entityId.substr(0, entityId.indexOf('.')));
-    });
+    if (ofType)
+      entities = entities.filter(entityId => {
+        return ofType.includes(entityId.substr(0, entityId.indexOf('.')));
+      });
     return entities.sort();
   }
 
@@ -210,12 +213,11 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
     }
     const { target }: any = ev;
     if (target.configValue) {
-      const [,
-        objName,
-        propName,
-      ] = target.configValue.match(/^([_a-zA-Z][_a-zA-Z0-9]+)?(?:\[([_a-zA-Z][_a-zA-Z0-9]+)\])$/);
+      const [, objName, propName] = target.configValue.match(
+        /^([_a-zA-Z][_a-zA-Z0-9]+)?(?:\[([_a-zA-Z][_a-zA-Z0-9]+)\])$/
+      );
 
-      const configObj = objName ? (this.config[objName] || {}) : this.config;
+      const configObj = objName ? this.config[objName] || {} : this.config;
       if (configObj[propName] === (target.checked !== undefined ? target.checked : target.value)) {
         return;
       }
@@ -224,24 +226,24 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
           ...this._config,
           [objName]: {
             ...this._config[objName],
-            [propName]: target.checked !== undefined ? target.checked : target.value,
-          },
+            [propName]: target.checked !== undefined ? target.checked : target.value
+          }
         };
       else
         this._config = {
           ...this._config,
-          [propName]:
-            target.checked !== undefined ? target.checked : target.value,
+          [propName]: target.checked !== undefined ? target.checked : target.value
         };
     }
     fireEvent(this, 'config-changed', { config: this._config });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   private classesForItem(configValue: any, hasDefault?: boolean, required?: boolean): string {
     const isDefault = hasDefault && configValue === undefined;
     const classes = [
       isDefault ? 'default' : '',
-      required && (hasDefault && !isDefault) || configValue === '' ? 'error' : '',
+      (required && hasDefault && !isDefault) || configValue === '' ? 'error' : ''
     ];
     return classes.join(' ').trim();
   }
@@ -255,7 +257,7 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
         line-height: var(--paper-font-body1_-_line-height);
       }
       .label .heading {
-        font-size: var(--paper-input-container-shared-input-style_-_font-size)
+        font-size: var(--paper-input-container-shared-input-style_-_font-size);
       }
       .label .description {
         color: var(--disabled-text-color);
@@ -275,10 +277,13 @@ export class SunCardEditor extends LitElement implements LovelaceCardEditor {
       ha-switch {
         min-width: 80px;
       }
-      #name.default, #time.default, #elevation.default {
+      #name.default,
+      #time.default,
+      #elevation.default {
         --paper-input-container-input-color: var(--disabled-text-color);
       }
-      #meridiem.default, #animation.default {
+      #meridiem.default,
+      #animation.default {
         --switch-checked-track-color: var(--disabled-text-color);
         --switch-checked-button-color: var(--disabled-text-color);
         --switch-unchecked-track-color: var(--disabled-text-color);

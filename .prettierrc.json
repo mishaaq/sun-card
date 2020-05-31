@@ -1,0 +1,14 @@
+{
+  "printWidth": 100,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "endOfLine": "lf",
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": "*.@(js|ts)",
+      "options": { "parser": "typescript" }
+    }
+  ]
+}

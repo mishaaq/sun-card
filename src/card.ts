@@ -8,43 +8,30 @@ import {
   TemplateResult,
   SVGTemplateResult,
   css,
-  PropertyValues,
+  PropertyValues
 } from 'lit-element';
-
-import {
-  HomeAssistant,
-  LovelaceCardEditor,
-} from 'custom-card-helpers';
-
 import moment from 'moment';
 import 'moment/min/locales';
 import 'moment-timezone/builds/moment-timezone-with-data';
-
 import { HumanizeDurationLanguage, HumanizeDuration } from 'humanize-duration-ts';
+import { HomeAssistant, LovelaceCardEditor } from 'custom-card-helpers';
 
 import { CARD_VERSION, SVG_ICONS } from './const';
-
-import {
-  SunCardConfig,
-  Coords,
-  ISun,
-  IMoon,
-  ITime,
-  EntityMutator,
-} from './types';
-
+import { SunCardConfig, Coords, ISun, IMoon, ITime, EntityMutator } from './types';
 import './editor';
-import { Factory } from './entities';
+import Factory from './entities';
 
 /* eslint no-console: 0 */
-console.info(`%c SUN-CARD %c ${CARD_VERSION} `,
+console.info(
+  `%c SUN-CARD %c ${CARD_VERSION} `,
   'color: white; background: coral; font-weight: 700;',
-  'color: coral; background: white; font-weight: 700;');
+  'color: coral; background: white; font-weight: 700;'
+);
 
-let updateFunc: EntityMutator|undefined;
+let updateFunc: EntityMutator | undefined;
 
 @customElement('sun-card')
-class SunCard extends LitElement {
+export default class SunCard extends LitElement {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     return document.createElement('sun-card-editor') as LovelaceCardEditor;
   }
@@ -73,7 +60,7 @@ class SunCard extends LitElement {
   public setConfig(newConfig: SunCardConfig): void {
     const entities = {
       ...{ time: 'sensor.time_utc', elevation: 'sun.sun' },
-      ...newConfig.entities,
+      ...newConfig.entities
     };
     if (!newConfig?.type || entities.time === '' || entities.elevation === '') {
       throw new Error('Invalid configuration: missing entities for "time" or "elevation"!');
@@ -94,7 +81,7 @@ class SunCard extends LitElement {
         language: hass.language.split('-')[0],
         delimiter: ' ',
         units: ['h', 'm'],
-        round: true,
+        round: true
       });
     }
   }
@@ -106,9 +93,9 @@ class SunCard extends LitElement {
 
     const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
     return oldHass
-      ? Object.values(this._config!.entities).some((entityName) => {
-        return oldHass.states[entityName] !== this.hass!.states[entityName];
-      })
+      ? Object.values(this._config!.entities).some(entityName => {
+          return oldHass.states[entityName] !== this.hass!.states[entityName];
+        })
       : false;
   }
 
@@ -121,8 +108,9 @@ class SunCard extends LitElement {
 
       const oldHass = changedProps.get('_hass') as HomeAssistant | undefined;
       if (oldHass && this._provider) {
-        Object.values(this._config!.entities).forEach((entityName) => {
-          if (oldHass.states[entityName] !== this.hass!.states[entityName]) updateFunc!(this.hass!.states[entityName]);
+        Object.values(this._config!.entities).forEach(entityName => {
+          if (oldHass.states[entityName] !== this.hass!.states[entityName])
+            updateFunc!(this.hass!.states[entityName]);
         });
       }
     } catch (e) {
@@ -149,70 +137,81 @@ class SunCard extends LitElement {
       return html``;
     }
 
-    const sun = this.renderSun(this._provider.current_time, this._provider.elevation);
-    const sunBeam = this._config!.animation || this._config!.animation === undefined
-      ? this.renderSunbeam(this._provider.current_time, this._provider.elevation) : null;
+    const sun = this.renderSun(this._provider.currentTime, this._provider.elevation);
+    const sunBeam =
+      this._config!.animation || this._config!.animation === undefined
+        ? this.renderSunbeam(this._provider.currentTime, this._provider.elevation)
+        : null;
 
     const sunrise = this._provider.sunrise ? this.renderSunrise(this._provider.sunrise) : null;
     const sunset = this._provider.sunset ? this.renderSunset(this._provider.sunset) : null;
-    const noon = this._provider.solar_noon ? this.renderNoon(this._provider.solar_noon) : null;
+    const noon = this._provider.solarNoon ? this.renderNoon(this._provider.solarNoon) : null;
 
-    const moonPhase = this._provider.moon_phase ? this.renderMoon(this._provider.moon_phase) : null;
+    const moonPhase = this._provider.moonPhase ? this.renderMoon(this._provider.moonPhase) : null;
 
-    const timeToSunset = this._provider.to_sunset ? this.renderTimeToSunset(this._provider.to_sunset) : null;
+    const timeToSunset = this._provider.toSunset
+      ? this.renderTimeToSunset(this._provider.toSunset)
+      : null;
     const daylight = this._provider.daylight ? this.renderDaylight(this._provider.daylight) : null;
 
     let header = this._config.name;
     if (header === undefined)
-      header = this.hass.states['sun.sun']?.attributes.friendly_name
-        || this.hass.localize('domain.sun');
+      header =
+        this.hass.states['sun.sun']?.attributes.friendly_name || this.hass.localize('domain.sun');
     return html`
       <ha-card .header=${header}>
         <div class="content">
-          <svg class="top" preserveAspectRatio="xMinYMin slice" viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
-            ${sunrise}
-            ${sunset}
-            ${sunBeam}
-            ${sun}
+          <svg
+            class="top"
+            preserveAspectRatio="xMinYMin slice"
+            viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
+            xmlns="http://www.w3.org/2000/svg"
+            version="1.1"
+          >
+            ${sunrise} ${sunset} ${sunBeam} ${sun}
           </svg>
-          <svg class="bottom" preserveAspectRatio="xMinYMax slice" viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}" xmlns="http://www.w3.org/2000/svg" version="1.1">
+          <svg
+            class="bottom"
+            preserveAspectRatio="xMinYMax slice"
+            viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
+            xmlns="http://www.w3.org/2000/svg"
+            version="1.1"
+          >
             <line x1="0" y1="0" x2="${this.svgViewBoxW}" y2="0" class="horizon" />
-            ${noon}
-            ${sun}
+            ${noon} ${sun}
           </svg>
           <div class="moon-icon">
             ${moonPhase}
           </div>
         </div>
         <div class="info">
-          ${timeToSunset}
-          ${daylight}
+          ${timeToSunset} ${daylight}
         </div>
       </ha-card>
     `;
   }
 
-  private renderSun(current_time: moment.Moment, elevation: number): SVGTemplateResult {
-    const sunPos: Coords = this.metric(current_time, elevation);
+  private renderSun(currentTime: moment.Moment, elevation: number): SVGTemplateResult {
+    const sunPos: Coords = this.metric(currentTime, elevation);
     return svg`
       <line class="sun" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
     `;
   }
 
-  renderSunbeam(current_time: moment.Moment, elevation: number): SVGTemplateResult {
-    const sunPos: Coords = this.metric(current_time, elevation);
+  private renderSunbeam(currentTime: moment.Moment, elevation: number): SVGTemplateResult {
+    const sunPos: Coords = this.metric(currentTime, elevation);
     return svg`
       <line class="sunbeam" x1="${sunPos.x}" x2="${sunPos.x}" y1="${sunPos.y}" y2="${sunPos.y}" />
     `;
   }
 
-  renderSunrise(sunrise: moment.Moment): SVGTemplateResult {
+  private renderSunrise(sunrise: moment.Moment): SVGTemplateResult {
     if (!sunrise.isValid()) {
       return svg``;
     }
     const timeFormat =
-      this._config!.meridiem === undefined && 'LT' ||
-      this._config!.meridiem === true && 'h:mm A' ||
+      (this._config!.meridiem === undefined && 'LT') ||
+      (this._config!.meridiem === true && 'h:mm A') ||
       'H:mm';
     const eventPos: Coords = this.metric(sunrise, 100);
     return svg`
@@ -228,13 +227,13 @@ class SunCard extends LitElement {
     `;
   }
 
-  renderNoon(noon: moment.Moment): SVGTemplateResult {
+  private renderNoon(noon: moment.Moment): SVGTemplateResult {
     if (!noon.isValid()) {
       return svg``;
     }
     const timeFormat =
-      this._config!.meridiem === undefined && 'LT' ||
-      this._config!.meridiem === true && 'h:mm A' ||
+      (this._config!.meridiem === undefined && 'LT') ||
+      (this._config!.meridiem === true && 'h:mm A') ||
       'H:mm';
     const eventPos: Coords = this.metric(noon, 0);
     return svg`
@@ -250,13 +249,13 @@ class SunCard extends LitElement {
     `;
   }
 
-  renderSunset(sunset: moment.Moment): SVGTemplateResult {
+  private renderSunset(sunset: moment.Moment): SVGTemplateResult {
     if (!sunset.isValid()) {
       return svg``;
     }
     const timeFormat =
-      this._config!.meridiem === undefined && 'LT' ||
-      this._config!.meridiem === true && 'h:mm A' ||
+      (this._config!.meridiem === undefined && 'LT') ||
+      (this._config!.meridiem === true && 'h:mm A') ||
       'H:mm';
     const eventPos: Coords = this.metric(sunset, 100);
     return svg`
@@ -272,19 +271,20 @@ class SunCard extends LitElement {
     `;
   }
 
-  renderTimeToSunset(to_sunset: moment.Duration): TemplateResult {
-    if (!to_sunset.isValid()) {
+  // eslint-disable-next-line class-methods-use-this
+  private renderTimeToSunset(toSunset: moment.Duration): TemplateResult {
+    if (!toSunset.isValid()) {
       return html``;
     }
     return html`
       <div>
         <ha-icon slot="item-icon" icon="mdi:weather-sunset-down"></ha-icon>
-        <span class="item-text">: ${to_sunset.humanize(true)}</span>
+        <span class="item-text">: ${toSunset.humanize(true)}</span>
       </div>
     `;
   }
 
-  renderDaylight(daylight: moment.Duration): TemplateResult {
+  private renderDaylight(daylight: moment.Duration): TemplateResult {
     if (!daylight.isValid()) {
       return html``;
     }
@@ -296,19 +296,18 @@ class SunCard extends LitElement {
     `;
   }
 
-  renderMoon(moon_phase_icon: string | undefined): TemplateResult {
-    if (!moon_phase_icon) {
+  // eslint-disable-next-line class-methods-use-this
+  private renderMoon(moonPhaseIcon: string | undefined): TemplateResult {
+    if (!moonPhaseIcon) {
       return html``;
     }
-    return html`
-      <ha-icon icon=${moon_phase_icon}></ha-icon>
-    `;
+    return html` <ha-icon icon=${moonPhaseIcon}></ha-icon> `;
   }
 
   private metric(time: moment.Moment, elevation: number): Coords {
     return {
       x: time.hour() * 60 + time.minute(),
-      y: -elevation * this.yScale,
+      y: -elevation * this.yScale
     };
   }
 
@@ -321,10 +320,15 @@ class SunCard extends LitElement {
         padding: 8px;
       }
       .content {
-        background: var(--sc-background, linear-gradient(hsla(205, 86%, 100%, 0%)   0%,
-                                                         hsla(200, 91%,  90%)      46%,
-                                                         hsla( 74, 75%,  50%)      54%,
-                                                         hsla( 76, 72%,  50%, 0%) 100%));
+        background: var(
+          --sc-background,
+          linear-gradient(
+            hsla(205, 86%, 100%, 0%) 0%,
+            hsla(200, 91%, 90%) 46%,
+            hsla(74, 75%, 50%) 54%,
+            hsla(76, 72%, 50%, 0%) 100%
+          )
+        );
         display: flex;
         flex-flow: column nowrap;
         position: relative;
@@ -358,8 +362,14 @@ class SunCard extends LitElement {
         stroke-linecap: round;
       }
       @keyframes beam {
-        from { opacity: 1; stroke-width: var(--sc-sun-size, 60px); }
-        to   { opacity: 0; stroke-width: calc(2 * var(--sc-sun-size, 60px)); }
+        from {
+          opacity: 1;
+          stroke-width: var(--sc-sun-size, 60px);
+        }
+        to {
+          opacity: 0;
+          stroke-width: calc(2 * var(--sc-sun-size, 60px));
+        }
       }
       svg .sunbeam {
         stroke: var(--sc-sunbeam-color, #fbec5d);

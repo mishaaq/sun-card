@@ -17,8 +17,9 @@ It provides visual information about current sun elevation throughout the day, t
 | Sun2               | :sunny:               | :sunny:     | :sunny:     | :sunny:    | :sunny:           | :sunny:        |
 
 > You have to have mentioned `monitored_conditions` enabled in component:
-> * for `Extended sun` component: `elevation`, `max_elevation`, `sunrise`, `sunset`
-> * for `Sun2` component: `sunrise`, `sunset`, `solar_noon`, `max_elevation`
+>
+> - for `Extended sun` component: `elevation`, `max_elevation`, `sunrise`, `sunset`
+> - for `Sun2` component: `sunrise`, `sunset`, `solar_noon`, `max_elevation`
 
 The card depicts current moon phase if you have defined `moon_phase` entry in card configuration.
 
@@ -28,12 +29,13 @@ The card depicts current moon phase if you have defined `moon_phase` entry in ca
 
 Card options:
 
-| Name     | Type    | Requirement  | Default value     | Description                                              |
-| -------- | ------- | ------------ | ----------------- | -------------------------------------------------------- |
-| type     | string  | **Required** | `custom:sun-card` | Type of card, non-modifiable                             |
-| name     | string  | **Optional** | Language specific | Card name visible in header, no header when empty value  |
-| meridiem | boolean | **Optional** | Language specific | Clock format: 12h or 24h                                 |
-| entities | Object  | **Optional** | -                 | Allows defining entities providing required data         |
+| Name      | Type    | Requirement  | Default value     | Description                                             |
+| --------- | ------- | ------------ | ----------------- | ------------------------------------------------------- |
+| type      | string  | **Required** | `custom:sun-card` | Type of card, non-modifiable                            |
+| name      | string  | **Optional** | Language specific | Card name visible in header, no header when empty value |
+| meridiem  | boolean | **Optional** | Language specific | Clock format: 12h or 24h                                |
+| animation | boolean | **Optional** | true              | Turn on/off sunbeam animation                           |
+| entities  | Object  | **Optional** | -                 | Allows defining entities providing required data        |
 
 Entities options:
 
@@ -51,16 +53,27 @@ Entities options:
 
 You can simply change default style of the card specifying CSS variables in your theme:
 
-| Variable              | CSS Attribute | Purpose                                          |
-| --------------------- | ------------- | ------------------------------------------------ |
-| --sc-background       | background    | background of the viewport                       |
-| --sc-sun-color        | stroke        | Sun fulfillment color                            |
-| --sc-sunbeam-color    | stroke        | Sunbeam stroke color                             |
-| --sc-sun-night-color  | stroke        | Sun stroke color when being below horizon        |
-| --sc-sun-size         | stroke-width  | Sun size in pixels, default to 60px              |
-| --sc-event-line-color | stroke        | Sunrise, noon and sunset timestamp markers color |
-| --sc-horizon-color    | stroke        | Horizon line color                               |
-| --sc-moon-color       | fill          | Moon fill color                                  |
+| Variable                 | CSS Attribute | Purpose                                                                                                          |
+| ------------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------- |
+| --sc-background          | background    | Background of the viewport                                                                                       |
+| --sc-background-auxilary | background    | Additional background of the viewport; with regular background let you define backgrounds for day and night      |
+| --sc-background-filter   | filter        | Allows adjustment of the backgrounds                                                                             |
+| --sc-sun-color           | stroke        | Sun fulfillment color                                                                                            |
+| --sc-sunbeam-color       | stroke        | Sunbeam stroke color                                                                                             |
+| --sc-sun-night-color     | stroke        | Sun stroke color when being below horizon                                                                        |
+| --sc-sun-size            | stroke-width  | Sun size in pixels, default to 60px                                                                              |
+| --sc-event-line-color    | stroke        | Sunrise, noon and sunset timestamp markers color                                                                 |
+| --sc-horizon-color       | stroke        | Horizon line color                                                                                               |
+| --sc-moon-color          | fill          | Moon fill color                                                                                                  |
+| --sc-elevation           | none          | CSS variable of number in range -1..1 that equals how high the Sun is currently related to it's maximum position |
+
+> Tip: define different backgrounds for day and night period:
+>
+> You may define `--sc-background` for day period and `--sc-background-auxilary` for night period. To display them exclusively you may leverage `alpha` compound and calculate its value using current `--sc-elevation` value, ie. in theme file:
+>
+> `--sc-background: rgba(255, 0, 0, calc(10000 * var(--sc-elevation)))` (alpha compound capped to 1 for elevation > 0)
+>
+> `--sc-background-auxilary: rgba(0, 0, 255, calc(-10000 * var(--sc-elevation)))` (alpha compound capped to 1 for elevation < 0)
 
 ## Installation
 
@@ -102,7 +115,7 @@ resources:
 ### Examples
 
 ```yaml
-- type: "custom:sun-card"
+- type: 'custom:sun-card'
   name: Sun
   meridiem: false
   entities:

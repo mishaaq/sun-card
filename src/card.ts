@@ -57,6 +57,8 @@ export default class SunCard extends LitElement {
 
   readonly humanizer: HumanizeDuration = new HumanizeDuration(new HumanizeDurationLanguage());
 
+  readonly themeOverrides: { [key: string]: string } = {};
+
   public setConfig(newConfig: SunCardConfig): void {
     const entities = {
       ...{ time: 'sensor.time_utc', elevation: 'sun.sun' },
@@ -83,6 +85,16 @@ export default class SunCard extends LitElement {
         units: ['h', 'm'],
         round: true
       });
+    }
+  }
+
+  constructor() {
+    super();
+    const { style } = document.documentElement;
+    for (let i = 0; i < style.length; i += 1) {
+      if (style[i].startsWith('--sc-')) {
+        this.themeOverrides[style[i]] = style.getPropertyValue(style[i]);
+      }
     }
   }
 
@@ -146,6 +158,7 @@ export default class SunCard extends LitElement {
     const sunrise = this._provider.sunrise ? this.renderSunrise(this._provider.sunrise) : null;
     const sunset = this._provider.sunset ? this.renderSunset(this._provider.sunset) : null;
     const noon = this._provider.solarNoon ? this.renderNoon(this._provider.solarNoon) : null;
+    const horizon = this.renderHorizon();
 
     const moonPhase = this._provider.moonPhase ? this.renderMoon(this._provider.moonPhase) : null;
 
@@ -159,27 +172,33 @@ export default class SunCard extends LitElement {
       header =
         this.hass.states['sun.sun']?.attributes.friendly_name || this.hass.localize('domain.sun');
     return html`
-      <ha-card .header=${header}>
+      <ha-card
+        .header=${header}
+        style=${this.computeRootStyle(this._provider.elevation / this._provider.maxElevation)}
+      >
         <div class="content">
-          <svg
-            class="top"
-            preserveAspectRatio="xMinYMin slice"
-            viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
-            xmlns="http://www.w3.org/2000/svg"
-            version="1.1"
-          >
-            ${sunrise} ${sunset} ${sunBeam} ${sun}
-          </svg>
-          <svg
-            class="bottom"
-            preserveAspectRatio="xMinYMax slice"
-            viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
-            xmlns="http://www.w3.org/2000/svg"
-            version="1.1"
-          >
-            <line x1="0" y1="0" x2="${this.svgViewBoxW}" y2="0" class="horizon" />
-            ${noon} ${sun}
-          </svg>
+          <div class="bg-primary">
+            <div class="bg-secondary">
+              <svg
+                class="top"
+                preserveAspectRatio="xMinYMin slice"
+                viewBox="0 -${this.svgViewBoxH / 2} ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
+                xmlns="http://www.w3.org/2000/svg"
+                version="1.1"
+              >
+                ${sunrise} ${sunset} ${sunBeam} ${sun}
+              </svg>
+              <svg
+                class="bottom"
+                preserveAspectRatio="xMinYMax slice"
+                viewBox="0 0 ${this.svgViewBoxW} ${this.svgViewBoxH / 2}"
+                xmlns="http://www.w3.org/2000/svg"
+                version="1.1"
+              >
+                ${horizon} ${noon} ${sun}
+              </svg>
+            </div>
+          </div>
           <div class="moon-icon">
             ${moonPhase}
           </div>
@@ -188,6 +207,12 @@ export default class SunCard extends LitElement {
           ${timeToSunset} ${daylight}
         </div>
       </ha-card>
+    `;
+  }
+
+  private renderHorizon(): SVGTemplateResult {
+    return svg`
+      <line class="horizon" x1="0" y1="0" x2="${this.svgViewBoxW}" y2="0" />
     `;
   }
 
@@ -301,7 +326,14 @@ export default class SunCard extends LitElement {
     if (!moonPhaseIcon) {
       return html``;
     }
-    return html` <ha-icon icon=${moonPhaseIcon}></ha-icon> `;
+    return html`<ha-icon icon=${moonPhaseIcon}></ha-icon>`;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private computeRootStyle(elevation: number): string {
+    return `--sc-elevation: ${elevation};`.concat(
+      ...Object.entries(this.themeOverrides).map(entry => `${entry.join(': ')};`)
+    );
   }
 
   private metric(time: moment.Moment, elevation: number): Coords {
@@ -315,11 +347,17 @@ export default class SunCard extends LitElement {
     return css`
       .warning {
         display: block;
-        color: black;
+        color: var(--primary-text-color);
         background-color: #fce588;
         padding: 8px;
       }
       .content {
+        filter: var(--sc-background-filter, brightness(calc((2 + var(--sc-elevation)) / 3)));
+        display: flex;
+        flex-flow: column nowrap;
+        position: relative;
+      }
+      .bg-primary {
         background: var(
           --sc-background,
           linear-gradient(
@@ -329,9 +367,9 @@ export default class SunCard extends LitElement {
             hsla(76, 72%, 50%, 0%) 100%
           )
         );
-        display: flex;
-        flex-flow: column nowrap;
-        position: relative;
+      }
+      .bg-secondary {
+        background: var(--sc-background-auxilary, transparent);
       }
       .moon-icon {
         position: absolute;
@@ -354,7 +392,7 @@ export default class SunCard extends LitElement {
         font-size: 22px;
       }
       svg .event-line {
-        stroke: var(--sc-event-line-color, #212121);
+        stroke: var(--sc-event-line-color, var(--primary-color));
       }
       svg .sun {
         stroke: var(--sc-sun-color, #ffe160);

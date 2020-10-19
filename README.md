@@ -115,15 +115,15 @@ resources:
 ### Examples
 
 ```yaml
-- type: 'custom:sun-card'
-  name: Sun
-  meridiem: false
-  entities:
-    max_elevation: sun.sun
-    sunrise: sensor.sunrise
-    sunset: sensor.sunset
-    noon: sensor.solar_noon
-    moon_phase: sensor.moon
+type: 'custom:sun-card'
+name: Sun
+meridiem: false
+entities:
+  max_elevation: sun.sun
+  sunrise: sensor.sunrise
+  sunset: sensor.sunset
+  noon: sensor.solar_noon
+  moon_phase: sensor.moon
 ```
 
 <img src="https://raw.githubusercontent.com/mishaaq/sun-card/master/images/showcase.png" width="450px"/>
